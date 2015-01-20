@@ -15,47 +15,47 @@ package com.intel.jndn.utils;
  */
 public class ClientObservableEvent<T> {
 
-	boolean success;
-	long timestamp;
-	T packet;
+  boolean success;
+  long timestamp;
+  T packet;
 
-	public ClientObservableEvent(T packet) {
-		fromPacket(packet);
-	}
+  public ClientObservableEvent(T packet) {
+    fromPacket(packet);
+  }
 
-	public ClientObservableEvent() {
-		timestamp = System.currentTimeMillis();
-		success = false;
-	}
-	
-	public final void fromPacket(T packet_){
-		timestamp = System.currentTimeMillis();
-		success = !Exception.class.isInstance(packet_);
-		packet = packet_;
-	}
+  public ClientObservableEvent() {
+    timestamp = System.currentTimeMillis();
+    success = false;
+  }
 
-	public boolean isSuccess() {
-		return success;
-	}
+  public final void fromPacket(T packet_) {
+    timestamp = System.currentTimeMillis();
+    success = !Exception.class.isInstance(packet_);
+    packet = packet_;
+  }
 
-	public void setSuccess(boolean success) {
-		this.success = success;
-	}
+  public boolean isSuccess() {
+    return success;
+  }
 
-	public long getTimestamp() {
-		return timestamp;
-	}
+  public void setSuccess(boolean success) {
+    this.success = success;
+  }
 
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-	public T getPacket() {
-		return packet;
-	}
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+  }
 
-	public void setPacket(T packet) {
-		this.packet = packet;
-	}
+  public T getPacket() {
+    return packet;
+  }
+
+  public void setPacket(T packet) {
+    this.packet = packet;
+  }
 
 }
