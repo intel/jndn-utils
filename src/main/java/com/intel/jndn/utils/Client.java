@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Provide a client to simplify information retrieval over the NDN network.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -34,6 +35,19 @@ public class Client {
   public static final long DEFAULT_SLEEP_TIME = 20;
   public static final long DEFAULT_TIMEOUT = 2000;
   private static final Logger logger = LogManager.getLogger();
+  private static Client defaultInstance;
+
+  /**
+   * Singleton access for simpler client use
+   *
+   * @return
+   */
+  public static Client getDefault() {
+    if (defaultInstance == null) {
+      defaultInstance = new Client();
+    }
+    return defaultInstance;
+  }
 
   /**
    * Synchronously retrieve the Data for an Interest; this will block until
@@ -46,23 +60,19 @@ public class Client {
   public Data getSync(Face face, Interest interest) {
     // setup event
     long startTime = System.currentTimeMillis();
-    final ClientObservableEvent event = new ClientObservableEvent(); // this event is used without observer/observables for speed; just serves as a final reference into the callbacks
+    final ClientEvent event = new ClientEvent(); // this event is used without observer/observables for speed; just serves as a final reference into the callbacks
 
     // send interest
     try {
       face.expressInterest(interest, new OnData() {
         @Override
         public void onData(Interest interest, Data data) {
-          event.setTimestamp(System.currentTimeMillis());
-          event.setSuccess(true);
-          event.setPacket(data);
+          event.fromPacket(data);
         }
       }, new OnTimeout() {
         @Override
         public void onTimeout(Interest interest) {
-          event.setTimestamp(System.currentTimeMillis());
-          event.setSuccess(false);
-          event.setPacket(new Object());
+          event.fromPacket(new Exception("Interest timed out: " + interest.getName().toUri()));
         }
       });
     } catch (IOException e) {
@@ -70,7 +80,7 @@ public class Client {
       return null;
     }
 
-    // process events until a response is received or timeout
+    // process eventCount until a response is received or timeout
     while (event.getPacket() == null) {
       try {
         synchronized (face) {
@@ -103,8 +113,19 @@ public class Client {
 
   /**
    * Asynchronously retrieve the Data for a given interest; use the returned
-   * ClientObserver to handle the Data when it arrives. E.g.: Client.get(face,
-   * interest).then((data) -> doSomething(data));
+   * ClientObserver to handle the Data when it arrives. For example (with lambdas):
+   * <pre><code>
+   * Client.getDefault().get(face, interest).then((event) -> doSomething(event));
+   * </code></pre>
+   * 
+   * If you want to block until the response returns, try something like:
+   * <pre><code>
+   * ClientObserver observer = Client.getDefault().get(face, interest);
+   * while(observer.eventCount() == 0){
+   *   Thread.sleep(50);
+   * }
+   * doSomething(observer.getFirst());
+   * </code></pre>
    *
    * @param face
    * @param interest
@@ -128,8 +149,8 @@ public class Client {
           eventHandler.notify(e);
         }
 
-        // process events until a response is received or timeout
-        while (observer.responses() == 0 && observer.errors() == 0 && !observer.mustStop()) {
+        // process eventCount until a response is received or timeout
+        while (observer.dataCount() == 0 && observer.errorCount() == 0 && !observer.mustStop()) {
           try {
             synchronized (face) {
               face.processEvents();
@@ -140,7 +161,7 @@ public class Client {
           }
           sleep();
         }
-        
+
         // finished
         logger.trace("Received response; stopping thread.");
       }
@@ -178,7 +199,7 @@ public class Client {
     // setup event
     long startTime = System.currentTimeMillis();
     final String dataName = data.getName().toUri();
-    final ClientObservableEvent event = new ClientObservableEvent();
+    final ClientEvent event = new ClientEvent();
 
     // setup flags
     ForwardingFlags flags = new ForwardingFlags();
@@ -213,7 +234,7 @@ public class Client {
       event.fromPacket(e);
     }
 
-    // process events until one response is sent or error
+    // process eventCount until one response is sent or error
     while (event.getPacket() == null) {
       try {
         synchronized (face) {
@@ -284,15 +305,15 @@ public class Client {
           eventHandler.onError(e);
         }
 
-        // process events until a request is received
-        while (observer.requests() == 0 && observer.errors() == 0 && !observer.mustStop()) {
+        // process eventCount until a request is received
+        while (observer.interestCount() == 0 && observer.errorCount() == 0 && !observer.mustStop()) {
           try {
             synchronized (face) {
               face.processEvents();
             }
           } catch (IOException | EncodingException e) {
             logger.warn("Failed to process events.", e);
-            observer.update(eventHandler, new ClientObservableEvent());
+            observer.update(eventHandler, new ClientEvent());
           }
           sleep();
         }

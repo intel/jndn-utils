@@ -1,7 +1,7 @@
 /*
  * File name: ClientObserver.java
  * 
- * Purpose: 
+ * Purpose: Track asynchronous events from Client and provide simplified API
  * 
  * © Copyright Intel Corporation. All rights reserved.
  * Intel Corporation, 2200 Mission College Boulevard,
@@ -23,9 +23,9 @@ import net.named_data.jndn.OnData;
  */
 public class ClientObserver implements Observer {
 
-  protected List<ClientObservableEvent> events = new ArrayList<>();
+  protected List<ClientEvent> events = new ArrayList<>();
   protected long timestamp;
-  protected OnData then;
+  protected OnEvent then;
   protected boolean stopThread;
 
   /**
@@ -43,23 +43,59 @@ public class ClientObserver implements Observer {
    */
   @Override
   public void update(Observable o, Object arg) {
-    ClientObservableEvent event = (ClientObservableEvent) arg;
+    ClientEvent event = (ClientEvent) arg;
     events.add(event);
     // call onData callbacks
     if (Data.class.isInstance(event.packet) && then != null) {
-      then.onData(null, (Data) event.packet);
+      then.onEvent(event);
     }
   }
 
   /**
-   * Register a handler for data packets
+   * Register a handler for events
    *
-   * @param handler
+   * @param callback
    * @return
    */
-  public ClientObserver then(OnData handler) {
-    then = handler;
+  public ClientObserver then(OnEvent callback) {
+    then = callback;
     return this;
+  }
+
+  /**
+   * Count the number of eventCount observed
+   *
+   * @return
+   */
+  public int eventCount() {
+    return events.size();
+  }
+
+  /**
+   * Count the number of interest packets observed (received or sent)
+   *
+   * @return
+   */
+  public int interestCount() {
+    return count(Interest.class);
+  }
+
+  /**
+   * Count the number of Data packets observed
+   *
+   * @return
+   */
+  public int dataCount() {
+    return count(Data.class);
+  }
+
+  /**
+   * Count the number of errors observed
+   *
+   * @return
+   */
+  public int errorCount() {
+    return count(Exception.class);
   }
 
   /**
@@ -70,7 +106,7 @@ public class ClientObserver implements Observer {
    */
   public int count(Class type) {
     int count = 0;
-    for (ClientObservableEvent event : events) {
+    for (ClientEvent event : events) {
       if (type.isInstance(event.packet)) {
         count++;
       }
@@ -79,34 +115,8 @@ public class ClientObserver implements Observer {
   }
 
   /**
-   * Count the number of interest packets observed (received or sent)
-   *
-   * @return
-   */
-  public int requests() {
-    return count(Interest.class);
-  }
-
-  /**
-   * Count the number of Data packets observed
-   *
-   * @return
-   */
-  public int responses() {
-    return count(Data.class);
-  }
-
-  /**
-   * Count the number of errors
-   *
-   * @return
-   */
-  public int errors() {
-    return count(Exception.class);
-  }
-
-  /**
-   * Get time since observer start
+   * Calculate time elapsed since observer started observing until this method
+   * is called
    *
    * @return
    */
@@ -118,11 +128,20 @@ public class ClientObserver implements Observer {
   }
 
   /**
-   * Retrieve first event
+   * Retrieve a list of observed events
    *
    * @return event or null
    */
-  public ClientObservableEvent getFirst() {
+  public List<ClientEvent> getEvents() {
+    return events;
+  }
+
+  /**
+   * Retrieve the first event
+   *
+   * @return event or null
+   */
+  public ClientEvent getFirst() {
     if (events.size() > 0) {
       return events.get(0);
     }
@@ -130,11 +149,11 @@ public class ClientObserver implements Observer {
   }
 
   /**
-   * Retrieve last event
+   * Retrieve the last event
    *
    * @return event or null
    */
-  public ClientObservableEvent getLast() {
+  public ClientEvent getLast() {
     if (events.size() > 0) {
       return events.get(events.size() - 1);
     }
@@ -142,14 +161,16 @@ public class ClientObserver implements Observer {
   }
 
   /**
-   * Stop the current Client thread
+   * Stop the current Client thread; used by asynchronous Client methods to
+   * stop the request/response thread
    */
   public void stop() {
     stopThread = true;
   }
 
   /**
-   * Check the current stop status
+   * Check the current stop status; used by asynchronous Client methods to
+   * stop the request/response thread
    *
    * @return
    */

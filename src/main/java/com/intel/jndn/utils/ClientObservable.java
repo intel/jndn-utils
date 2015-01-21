@@ -26,7 +26,7 @@ import net.named_data.jndn.transport.Transport;
  */
 public class ClientObservable extends Observable implements OnData, OnTimeout, OnInterest {
 
-  protected List<ClientObservableEvent> events = new ArrayList<>();
+  protected List<ClientEvent> events = new ArrayList<>();
   protected List<Interest> incomingInterestPackets = new ArrayList<>();
   protected List<Data> incomingDataPackets;
 
@@ -38,7 +38,7 @@ public class ClientObservable extends Observable implements OnData, OnTimeout, O
    */
   public <T> void notify(T packet) {
     setChanged();
-    notifyObservers(new ClientObservableEvent(packet));
+    notifyObservers(new ClientEvent(packet));
   }
 
   /**
@@ -68,7 +68,7 @@ public class ClientObservable extends Observable implements OnData, OnTimeout, O
    */
   @Override
   public void onTimeout(Interest interest) {
-    notify(interest);
+    notify(new Exception("Interest timed out: " + interest.getName().toUri()));
   }
 
   /**
