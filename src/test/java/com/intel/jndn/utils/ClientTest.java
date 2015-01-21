@@ -9,10 +9,6 @@
  */
 package com.intel.jndn.utils;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.intel.jndn.mock.MockTransport;
@@ -28,8 +24,7 @@ import org.apache.logging.log4j.Logger;
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class ClientTest {
-  
-  
+
   /**
    * Setup logging
    */
@@ -58,8 +53,8 @@ public class ClientTest {
 
   /**
    * Test retrieving data asynchronously
-   * 
-   * @throws InterruptedException 
+   *
+   * @throws InterruptedException
    */
   @Test
   public void testGetAsync() throws InterruptedException {

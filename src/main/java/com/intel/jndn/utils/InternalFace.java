@@ -11,7 +11,7 @@
 package com.intel.jndn.utils;
 
 /**
- *
+ * TODO waiting on Face to become overridable
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class InternalFace {
