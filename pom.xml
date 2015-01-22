@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.intel.jndn.utils</groupId>
 	<artifactId>jndn-utils</artifactId>
-	<version>0.9.2</version>
+	<version>0.9.3</version>
 	<packaging>jar</packaging>
-	<description>Collection of tools to simplify synchronous and asynchronous requests over the NDN network</description>
+	<description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network</description>
 	<dependencies>
 		<dependency>
 			<groupId>net.named_data.jndn</groupId>

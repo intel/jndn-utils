@@ -19,6 +19,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.OnInterest;
 import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.transport.Transport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,6 +37,8 @@ public class Server {
   public static final long DEFAULT_TIMEOUT = 2000;
   private static final Logger logger = LogManager.getLogger();
   private static Server defaultInstance;
+  private KeyChain keyChain;
+  private Name certificateName;
 
   /**
    * Singleton access for simpler server use
@@ -47,6 +50,24 @@ public class Server {
       defaultInstance = new Server();
     }
     return defaultInstance;
+  }
+
+  /**
+   * Constructor
+   */
+  public Server() {
+    // no signing
+  }
+
+  /**
+   * Constructor; enables signing
+   *
+   * @param keyChain
+   * @param certificateName
+   */
+  public Server(KeyChain keyChain, Name certificateName) {
+    this.keyChain = keyChain;
+    this.certificateName = certificateName;
   }
 
   /**
@@ -73,6 +94,17 @@ public class Server {
       face.registerPrefix(data.getName(), new OnInterest() {
         @Override
         public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+          // sign packet
+          if (keyChain != null) {
+            try {
+              keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
+            } catch (net.named_data.jndn.security.SecurityException e) {
+              logger.error("Failed to sign data for: " + dataName, e);
+              event.fromPacket(e);
+            }
+          }
+
+          // send packet
           try {
             transport.send(data.wireEncode().buf());
             logger.debug("Sent data: " + dataName);
@@ -118,7 +150,7 @@ public class Server {
   /**
    * Asynchronously serve a Data on the given face until an observer stops it.
    * E.g.: NDNObserver observer = Client.put(face, data); // when finished
- serving the data, stop the background thread observer.stop();
+   * serving the data, stop the background thread observer.stop();
    *
    * @param face
    * @param data
@@ -130,10 +162,21 @@ public class Server {
     final NDNObservable eventHandler = new NDNObservable();
     eventHandler.addObserver(observer);
 
-    // setup handlers
+    // setup interest handler
     final OnInterest interestHandler = new OnInterest() {
       @Override
       public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+        // sign packet
+        if (keyChain != null) {
+          try {
+            keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
+          } catch (net.named_data.jndn.security.SecurityException e) {
+            logger.error("Failed to sign data for: " + data.getName().toUri(), e);
+            eventHandler.notify(e);
+          }
+        }
+
+        // send packet
         try {
           transport.send(data.wireEncode().buf());
         } catch (IOException e) {
@@ -142,6 +185,8 @@ public class Server {
         }
       }
     };
+
+    // setup failure handler
     final OnRegisterFailed failureHandler = new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(Name prefix) {
@@ -149,11 +194,13 @@ public class Server {
         eventHandler.notify(new Exception("Failed to register name to put: " + data.getName().toUri()));
       }
     };
+
+    // setup forwarding flags
     final ForwardingFlags flags = new ForwardingFlags();
     flags.setCapture(true); // no shorter routes will answer for this prefix, see http://redmine.named-data.net/projects/nfd/wiki/RibMgmt#Route-inheritance
     flags.setChildInherit(false); // the interest name must be exact, no child components after the prefix
 
-    // setup background thread
+    // start background thread
     Thread backgroundThread = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -192,13 +239,13 @@ public class Server {
 
   /**
    * Register a prefix on the face to serve Data packets for incoming Interests.
-   * This method will create a background thread to process events until 
-   * the user calls stop() on the returned observer
-   * 
+   * This method will create a background thread to process events until the
+   * user calls stop() on the returned observer
+   *
    * @param face
    * @param prefix
    * @param handler
-   * @return 
+   * @return
    */
   public NDNObserver on(final Face face, final Name prefix, final OnServeInterest handler) {
     // setup observer
@@ -206,21 +253,38 @@ public class Server {
     final NDNObservable eventHandler = new NDNObservable();
     eventHandler.addObserver(observer);
 
-    // setup handlers
+    // setup interest handler
     final OnInterest interestHandler = new OnInterest() {
       @Override
       public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+        // notify observers of interest received
         eventHandler.notify(interest);
+
+        // grab data from OnServeInterest handler
+        Data data = handler.onInterest(prefix, interest);
+
+        // sign packet
+        if (keyChain != null) {
+          try {
+            keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
+          } catch (net.named_data.jndn.security.SecurityException e) {
+            logger.error("Failed to sign data for: " + interest.getName().toUri(), e);
+            eventHandler.notify(e);
+          }
+        }
+
+        // send packet
         try {
-          Data data = handler.onInterest(prefix, interest);
-          // TODO do signing here?
           transport.send(data.wireEncode().buf());
+          eventHandler.notify(data); // notify observers of data sent
         } catch (IOException e) {
-          logger.error("Failed to send data for: " + prefix.toUri());
+          logger.error("Failed to send data for: " + interest.getName().toUri());
           eventHandler.notify(e);
         }
       }
     };
+
+    // setup failure handler
     final OnRegisterFailed failureHandler = new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(Name prefix) {
@@ -228,11 +292,13 @@ public class Server {
         eventHandler.notify(new Exception("Failed to register name to put: " + prefix.toUri()));
       }
     };
+
+    // setup forwarding flags
     final ForwardingFlags flags = new ForwardingFlags();
     flags.setCapture(true); // no shorter routes will answer for this prefix, see http://redmine.named-data.net/projects/nfd/wiki/RibMgmt#Route-inheritance
     flags.setChildInherit(true); // the interest name may have child components after the prefix
 
-    // setup background thread
+    // start background thread
     Thread backgroundThread = new Thread(new Runnable() {
       @Override
       public void run() {
