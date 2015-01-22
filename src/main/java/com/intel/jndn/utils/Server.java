@@ -328,7 +328,7 @@ public class Server {
         }
       }
     });
-    backgroundThread.setName(String.format("Client.put(%s)", prefix.toUri()));
+    backgroundThread.setName(String.format("Server.on(%s)", prefix.toUri()));
     backgroundThread.setDaemon(true);
     backgroundThread.start();
 
