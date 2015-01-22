@@ -70,7 +70,7 @@ public class ClientTest {
     // retrieve data
     logger.info("Client expressing interest asynchronously: /test/async");
     Client client = new Client();
-    ClientObserver observer = client.get(face, new Name("/test/async"));
+    NDNObserver observer = client.get(face, new Name("/test/async"));
 
     // wait 
     while (observer.eventCount() == 0) {
@@ -95,7 +95,7 @@ public class ClientTest {
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/timeout");
-    ClientObserver observer = Client.getDefault().get(face, new Name("/test/timeout"));
+    NDNObserver observer = Client.getDefault().get(face, new Name("/test/timeout"));
 
     // wait 
     while (observer.errorCount() == 0) {
@@ -122,10 +122,10 @@ public class ClientTest {
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/callback");
-    ClientObserver observer = Client.getDefault().get(face, new Name("/test/callback"));
+    NDNObserver observer = Client.getDefault().get(face, new Name("/test/callback"));
     observer.then(new OnEvent(){
       @Override
-      public void onEvent(ClientEvent event) {
+      public void onEvent(NDNEvent event) {
         assertEquals(new Blob("...").buf(), ((Data) event.getPacket()).getContent().buf());
       }
     });

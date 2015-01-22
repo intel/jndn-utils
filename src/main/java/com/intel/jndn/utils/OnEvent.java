@@ -16,5 +16,5 @@ package com.intel.jndn.utils;
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public interface OnEvent {
-  public void onEvent(ClientEvent event);
+  public void onEvent(NDNEvent event);
 }

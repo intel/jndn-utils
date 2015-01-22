@@ -1,5 +1,5 @@
 /*
- * File name: ClientObservable.java
+ * File name: NDNObservable.java
  * 
  * Purpose: 
  * 
@@ -24,9 +24,9 @@ import net.named_data.jndn.transport.Transport;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class ClientObservable extends Observable implements OnData, OnTimeout, OnInterest {
+public class NDNObservable extends Observable implements OnData, OnTimeout, OnInterest {
 
-  protected List<ClientEvent> events = new ArrayList<>();
+  protected List<NDNEvent> events = new ArrayList<>();
   protected List<Interest> incomingInterestPackets = new ArrayList<>();
   protected List<Data> incomingDataPackets;
 
@@ -38,7 +38,7 @@ public class ClientObservable extends Observable implements OnData, OnTimeout, O
    */
   public <T> void notify(T packet) {
     setChanged();
-    notifyObservers(new ClientEvent(packet));
+    notifyObservers(new NDNEvent(packet));
   }
 
   /**

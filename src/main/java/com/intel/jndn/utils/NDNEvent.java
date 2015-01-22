@@ -1,5 +1,5 @@
 /*
- * File name: ClientEvent.java
+ * File name: NDNEvent.java
  * 
  * Purpose: Signals a Client event for observers to act on
  * 
@@ -10,10 +10,10 @@
 package com.intel.jndn.utils;
 
 /**
- * Signals a Client event for observers to act on
+ * Signals an event (from Client or Server) for observers to act on
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class ClientEvent<T> {
+public class NDNEvent<T> {
 
   protected boolean success;
   protected long timestamp;
@@ -22,7 +22,7 @@ public class ClientEvent<T> {
   /**
    * Constructor
    */
-  public ClientEvent() {
+  public NDNEvent() {
     timestamp = System.currentTimeMillis();
     success = false; // an event without a packet is a failed event
   }
@@ -32,7 +32,7 @@ public class ClientEvent<T> {
    * 
    * @param packet 
    */
-  public ClientEvent(T packet) {
+  public NDNEvent(T packet) {
     fromPacket(packet);
   }
 

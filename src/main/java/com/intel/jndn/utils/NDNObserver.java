@@ -1,7 +1,7 @@
 /*
- * File name: ClientObserver.java
+ * File name: NDNObserver.java
  * 
- * Purpose: Track asynchronous events from Client and provide simplified API
+ * Purpose: Track asynchronous events from Client and Server
  * 
  * © Copyright Intel Corporation. All rights reserved.
  * Intel Corporation, 2200 Mission College Boulevard,
@@ -15,15 +15,14 @@ import java.util.Observable;
 import java.util.Observer;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
-import net.named_data.jndn.OnData;
 
 /**
- *
+ * Track asynchronous events from Client and Server
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class ClientObserver implements Observer {
+public class NDNObserver implements Observer {
 
-  protected List<ClientEvent> events = new ArrayList<>();
+  protected List<NDNEvent> events = new ArrayList<>();
   protected long timestamp;
   protected OnEvent then;
   protected boolean stopThread;
@@ -31,7 +30,7 @@ public class ClientObserver implements Observer {
   /**
    * Constructor
    */
-  public ClientObserver() {
+  public NDNObserver() {
     timestamp = System.currentTimeMillis();
   }
 
@@ -43,7 +42,7 @@ public class ClientObserver implements Observer {
    */
   @Override
   public void update(Observable o, Object arg) {
-    ClientEvent event = (ClientEvent) arg;
+    NDNEvent event = (NDNEvent) arg;
     events.add(event);
     // call onData callbacks
     if (Data.class.isInstance(event.packet) && then != null) {
@@ -57,7 +56,7 @@ public class ClientObserver implements Observer {
    * @param callback
    * @return
    */
-  public ClientObserver then(OnEvent callback) {
+  public NDNObserver then(OnEvent callback) {
     then = callback;
     return this;
   }
@@ -106,7 +105,7 @@ public class ClientObserver implements Observer {
    */
   public int count(Class type) {
     int count = 0;
-    for (ClientEvent event : events) {
+    for (NDNEvent event : events) {
       if (type.isInstance(event.packet)) {
         count++;
       }
@@ -132,7 +131,7 @@ public class ClientObserver implements Observer {
    *
    * @return event or null
    */
-  public List<ClientEvent> getEvents() {
+  public List<NDNEvent> getEvents() {
     return events;
   }
 
@@ -141,7 +140,7 @@ public class ClientObserver implements Observer {
    *
    * @return event or null
    */
-  public ClientEvent getFirst() {
+  public NDNEvent getFirst() {
     if (events.size() > 0) {
       return events.get(0);
     }
@@ -153,7 +152,7 @@ public class ClientObserver implements Observer {
    *
    * @return event or null
    */
-  public ClientEvent getLast() {
+  public NDNEvent getLast() {
     if (events.size() > 0) {
       return events.get(events.size() - 1);
     }
