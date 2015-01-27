@@ -45,7 +45,7 @@ public class NDNObserver implements Observer {
     NDNEvent event = (NDNEvent) arg;
     events.add(event);
     // call onData callbacks
-    if (Data.class.isInstance(event.packet) && then != null) {
+    if (then != null) {
       then.onEvent(event);
     }
   }
