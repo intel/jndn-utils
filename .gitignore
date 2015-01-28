@@ -25,3 +25,8 @@ hs_err_pid*
 
 # Linux temporary files
 *~
+
+# Eclipse specific project files
+.classpath
+.project
+.settings
