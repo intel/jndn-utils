@@ -7,7 +7,7 @@
  * Intel Corporation, 2200 Mission College Boulevard,
  * Santa Clara, CA 95052-8119, USA
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.event;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
 
   /**
    * Generic notification
-   * 
+   *
    * @param <T>
    * @param packet
    */
@@ -43,9 +43,9 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
 
   /**
    * Handle data packets
-   * 
+   *
    * @param interest
-   * @param data 
+   * @param data
    */
   @Override
   public void onData(Interest interest, Data data) {
@@ -54,8 +54,8 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
 
   /**
    * Handle exceptions
-   * 
-   * @param e 
+   *
+   * @param e
    */
   public void onError(Exception e) {
     notify(e);
@@ -63,8 +63,8 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
 
   /**
    * Handle timeouts
-   * 
-   * @param interest 
+   *
+   * @param interest
    */
   @Override
   public void onTimeout(Interest interest) {
@@ -73,11 +73,11 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
 
   /**
    * Handle incoming interests
-   * 
+   *
    * @param prefix
    * @param interest
    * @param transport
-   * @param registeredPrefixId 
+   * @param registeredPrefixId
    */
   @Override
   public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
@@ -105,11 +105,13 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
       return interest;
     }
   }
-  
+
   /**
-   * Helper to reference both incoming interest and the transport to send data on
+   * Helper to reference both incoming interest and the transport to send data
+   * on
    */
-  class InterestTransportPacket{
+  class InterestTransportPacket {
+
     private Interest interest;
     private Transport transport;
 
@@ -125,6 +127,6 @@ public class NDNObservable extends Observable implements OnData, OnTimeout, OnIn
     public Transport getTransport() {
       return transport;
     }
-    
+
   }
 }

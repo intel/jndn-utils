@@ -12,12 +12,15 @@ package com.intel.jndn.utils;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.intel.jndn.mock.MockTransport;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.junit.rules.ExpectedException;
 
 /**
  * Test Client.java
@@ -28,7 +31,7 @@ public class ClientTest {
   /**
    * Setup logging
    */
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(Client.class.getName());
 
   /**
    * Test retrieving data synchronously
@@ -57,7 +60,7 @@ public class ClientTest {
    * @throws InterruptedException
    */
   @Test
-  public void testGetAsync() throws InterruptedException {
+  public void testGetAsync() throws InterruptedException, ExecutionException {
     // setup face
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
@@ -70,16 +73,12 @@ public class ClientTest {
     // retrieve data
     logger.info("Client expressing interest asynchronously: /test/async");
     Client client = new Client();
-    NDNObserver observer = client.get(face, new Name("/test/async"));
-
-    // wait 
-    while (observer.eventCount() == 0) {
-      Thread.sleep(10);
-    }
-    assertEquals(1, observer.eventCount());
-    assertEquals(1, observer.dataCount());
-    Data data = (Data) observer.getFirst().getPacket();
-    assertEquals(new Blob("...").buf(), data.getContent().buf());
+    FutureData futureData = client.getAsync(face, new Name("/test/async"));
+    
+    assertTrue(!futureData.isDone());
+    futureData.get();
+    assertTrue(futureData.isDone());
+    assertEquals(new Blob("...").toString(), futureData.get().getContent().toString());
   }
 
   /**
@@ -88,52 +87,16 @@ public class ClientTest {
    * @throws InterruptedException 
    */
   @Test
-  public void testTimeout() throws InterruptedException {
+  public void testTimeout() throws InterruptedException, ExecutionException, TimeoutException {
     // setup face
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/timeout");
-    NDNObserver observer = Client.getDefault().get(face, new Name("/test/timeout"));
-
-    // wait 
-    while (observer.errorCount() == 0) {
-      Thread.sleep(100);
-    }
-    Exception e = (Exception) observer.getFirst().getPacket();
-    assertEquals(1, observer.errorCount());
-  }
-  
-  /**
-   * Test that callback is called on event
-   * @throws InterruptedException 
-   */
-  @Test
-  public void testCallback() throws InterruptedException {
-    // setup face
-    MockTransport transport = new MockTransport();
-    Face face = new Face(transport, null);
+    FutureData futureData = Client.getDefault().getAsync(face, new Name("/test/timeout"));
     
-    // setup return data
-    Data response = new Data(new Name("/test/callback"));
-    response.setContent(new Blob("..."));
-    transport.respondWith(response);
-
-    // retrieve non-existent data, should timeout
-    logger.info("Client expressing interest asynchronously: /test/callback");
-    NDNObserver observer = Client.getDefault().get(face, new Name("/test/callback"));
-    observer.then(new OnEvent(){
-      @Override
-      public void onEvent(NDNEvent event) {
-        assertEquals(new Blob("...").buf(), ((Data) event.getPacket()).getContent().buf());
-      }
-    });
-
-    // wait 
-    while (observer.eventCount() == 0) {
-      Thread.sleep(100);
-    }
-    assertEquals(1, observer.eventCount());
+    ExpectedException.none().expect(TimeoutException.class);
+    futureData.get(50, TimeUnit.MILLISECONDS);
   }
 }

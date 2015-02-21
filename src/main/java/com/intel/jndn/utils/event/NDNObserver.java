@@ -7,7 +7,7 @@
  * Intel Corporation, 2200 Mission College Boulevard,
  * Santa Clara, CA 95052-8119, USA
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.event;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,7 @@ import net.named_data.jndn.Interest;
 
 /**
  * Track asynchronous events from Client and Server
+ *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class NDNObserver implements Observer {
@@ -160,16 +161,16 @@ public class NDNObserver implements Observer {
   }
 
   /**
-   * Stop the current Client thread; used by asynchronous Client methods to
-   * stop the request/response thread
+   * Stop the current Client thread; used by asynchronous Client methods to stop
+   * the request/response thread
    */
   public void stop() {
     stopThread = true;
   }
 
   /**
-   * Check the current stop status; used by asynchronous Client methods to
-   * stop the request/response thread
+   * Check the current stop status; used by asynchronous Client methods to stop
+   * the request/response thread
    *
    * @return
    */

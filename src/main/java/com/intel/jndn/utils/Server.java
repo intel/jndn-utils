@@ -10,6 +10,9 @@
  */
 package com.intel.jndn.utils;
 
+import com.intel.jndn.utils.event.NDNEvent;
+import com.intel.jndn.utils.event.NDNObservable;
+import com.intel.jndn.utils.event.NDNObserver;
 import java.io.IOException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -21,8 +24,7 @@ import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.transport.Transport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.logging.Logger;
 
 /**
  * Provide a server to simplify serving data over the NDN network. Exposes two
@@ -35,7 +37,7 @@ public class Server {
 
   public static final long DEFAULT_SLEEP_TIME = 20;
   public static final long DEFAULT_TIMEOUT = 2000;
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(Server.class.getName());
   private static Server defaultInstance;
   private KeyChain keyChain;
   private Name certificateName;
@@ -99,7 +101,7 @@ public class Server {
             try {
               keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
             } catch (net.named_data.jndn.security.SecurityException e) {
-              logger.error("Failed to sign data for: " + dataName, e);
+              logger.severe("Failed to sign data for: " + dataName + e);
               event.fromPacket(e);
             }
           }
@@ -107,10 +109,10 @@ public class Server {
           // send packet
           try {
             transport.send(data.wireEncode().buf());
-            logger.debug("Sent data: " + dataName);
+            logger.fine("Sent data: " + dataName);
             event.fromPacket(interest);
           } catch (IOException e) {
-            logger.error("Failed to send data for: " + dataName);
+            logger.severe("Failed to send data for: " + dataName);
             event.fromPacket(e);
           }
         }
@@ -122,10 +124,10 @@ public class Server {
       }, flags);
       logger.info("Registered data: " + dataName);
     } catch (IOException e) {
-      logger.error("Could not connect to face to register prefix: " + dataName, e);
+      logger.severe("Could not connect to face to register prefix: " + dataName + e);
       event.fromPacket(e);
     } catch (net.named_data.jndn.security.SecurityException e) {
-      logger.error("Error registering prefix: " + dataName, e);
+      logger.severe("Error registering prefix: " + dataName + e);
       event.fromPacket(e);
     }
 
@@ -136,14 +138,14 @@ public class Server {
           face.processEvents();
         }
       } catch (IOException | EncodingException e) {
-        logger.warn("Failed to process events.", e);
+        logger.warning("Failed to process events." + e);
         event.fromPacket(e);
       }
       sleep();
     }
 
     // return
-    logger.debug("Request time (ms): " + (event.getTimestamp() - startTime));
+    logger.fine("Request time (ms): " + (event.getTimestamp() - startTime));
     return (event.isSuccess()) ? (Interest) event.getPacket() : null;
   }
 
@@ -171,7 +173,7 @@ public class Server {
           try {
             keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
           } catch (net.named_data.jndn.security.SecurityException e) {
-            logger.error("Failed to sign data for: " + data.getName().toUri(), e);
+            logger.severe("Failed to sign data for: " + data.getName().toUri() + e);
             eventHandler.notify(e);
           }
         }
@@ -180,7 +182,7 @@ public class Server {
         try {
           transport.send(data.wireEncode().buf());
         } catch (IOException e) {
-          logger.error("Failed to send data for: " + data.getName().toUri());
+          logger.severe("Failed to send data for: " + data.getName().toUri());
           eventHandler.notify(e);
         }
       }
@@ -190,7 +192,7 @@ public class Server {
     final OnRegisterFailed failureHandler = new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(Name prefix) {
-        logger.error("Failed to register name to put: " + data.getName().toUri());
+        logger.severe("Failed to register name to put: " + data.getName().toUri());
         eventHandler.notify(new Exception("Failed to register name to put: " + data.getName().toUri()));
       }
     };
@@ -209,10 +211,10 @@ public class Server {
           face.registerPrefix(data.getName(), interestHandler, failureHandler, flags);
           logger.info("Registered data : " + data.getName().toUri());
         } catch (IOException e) {
-          logger.error("Could not connect to face to register prefix: " + data.getName().toUri(), e);
+          logger.severe("Could not connect to face to register prefix: " + data.getName().toUri() + e);
           eventHandler.notify(e);
         } catch (net.named_data.jndn.security.SecurityException e) {
-          logger.error("Error registering prefix: " + data.getName().toUri(), e);
+          logger.severe("Error registering prefix: " + data.getName().toUri() + e);
           eventHandler.notify(e);
         }
 
@@ -223,7 +225,7 @@ public class Server {
               face.processEvents();
             }
           } catch (IOException | EncodingException e) {
-            logger.warn("Failed to process events.", e);
+            logger.warning("Failed to process events." + e);
             eventHandler.notify(e);
           }
           sleep();
@@ -268,7 +270,7 @@ public class Server {
           try {
             keyChain.sign(data, certificateName != null ? certificateName : keyChain.getDefaultCertificateName());
           } catch (net.named_data.jndn.security.SecurityException e) {
-            logger.error("Failed to sign data for: " + interest.getName().toUri(), e);
+            logger.severe("Failed to sign data for: " + interest.getName().toUri() + e);
             eventHandler.notify(e);
           }
         }
@@ -278,7 +280,7 @@ public class Server {
           transport.send(data.wireEncode().buf());
           eventHandler.notify(data); // notify observers of data sent
         } catch (IOException e) {
-          logger.error("Failed to send data for: " + interest.getName().toUri());
+          logger.severe("Failed to send data for: " + interest.getName().toUri());
           eventHandler.notify(e);
         }
       }
@@ -288,7 +290,7 @@ public class Server {
     final OnRegisterFailed failureHandler = new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(Name prefix) {
-        logger.error("Failed to register name to put: " + prefix.toUri());
+        logger.severe("Failed to register name to put: " + prefix.toUri());
         eventHandler.notify(new Exception("Failed to register name to put: " + prefix.toUri()));
       }
     };
@@ -307,10 +309,10 @@ public class Server {
           face.registerPrefix(prefix, interestHandler, failureHandler, flags);
           logger.info("Registered data : " + prefix.toUri());
         } catch (IOException e) {
-          logger.error("Could not connect to face to register prefix: " + prefix.toUri(), e);
+          logger.severe("Could not connect to face to register prefix: " + prefix.toUri() + e);
           eventHandler.notify(e);
         } catch (net.named_data.jndn.security.SecurityException e) {
-          logger.error("Error registering prefix: " + prefix.toUri(), e);
+          logger.severe("Error registering prefix: " + prefix.toUri() + e);
           eventHandler.notify(e);
         }
 
@@ -321,7 +323,7 @@ public class Server {
               face.processEvents();
             }
           } catch (IOException | EncodingException e) {
-            logger.warn("Failed to process events.", e);
+            logger.warning("Failed to process events." + e);
             eventHandler.notify(e);
           }
           sleep();
@@ -342,7 +344,7 @@ public class Server {
     try {
       Thread.currentThread().sleep(DEFAULT_SLEEP_TIME);
     } catch (InterruptedException e) {
-      logger.error("Event loop interrupted.", e);
+      logger.severe("Event loop interrupted." + e);
     }
   }
 

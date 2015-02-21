@@ -7,10 +7,11 @@
  * Intel Corporation, 2200 Mission College Boulevard,
  * Santa Clara, CA 95052-8119, USA
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.event;
 
 /**
  * Signals an event (from Client or Server) for observers to act on
+ *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class NDNEvent<T> {
@@ -26,21 +27,21 @@ public class NDNEvent<T> {
     timestamp = System.currentTimeMillis();
     success = false; // an event without a packet is a failed event
   }
-  
+
   /**
    * Constructor
-   * 
-   * @param packet 
+   *
+   * @param packet
    */
   public NDNEvent(T packet) {
     fromPacket(packet);
   }
 
   /**
-   * Build this event from a passed packet; the event is considered a failure
-   * if the packet is any type of Exception
-   * 
-   * @param packet 
+   * Build this event from a passed packet; the event is considered a failure if
+   * the packet is any type of Exception
+   *
+   * @param packet
    */
   public final void fromPacket(T packet) {
     this.timestamp = System.currentTimeMillis();
@@ -50,8 +51,8 @@ public class NDNEvent<T> {
 
   /**
    * Retrieve success status
-   * 
-   * @return 
+   *
+   * @return
    */
   public boolean isSuccess() {
     return success;
@@ -59,8 +60,8 @@ public class NDNEvent<T> {
 
   /**
    * Retrieve event timestamp
-   * 
-   * @return 
+   *
+   * @return
    */
   public long getTimestamp() {
     return timestamp;
@@ -68,8 +69,8 @@ public class NDNEvent<T> {
 
   /**
    * Retrieve event packet
-   * 
-   * @return 
+   *
+   * @return
    */
   public T getPacket() {
     return packet;

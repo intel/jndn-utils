@@ -9,6 +9,7 @@
  */
 package com.intel.jndn.utils;
 
+import com.intel.jndn.utils.event.NDNObserver;
 import com.intel.jndn.mock.MockTransport;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;

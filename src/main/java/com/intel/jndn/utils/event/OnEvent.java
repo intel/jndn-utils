@@ -7,7 +7,7 @@
  * Intel Corporation, 2200 Mission College Boulevard,
  * Santa Clara, CA 95052-8119, USA
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.event;
 
 /**
  * Interface for registering generic event handlers. E.g.: observer.then((event)
@@ -16,5 +16,6 @@ package com.intel.jndn.utils;
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public interface OnEvent {
+
   public void onEvent(NDNEvent event);
 }
