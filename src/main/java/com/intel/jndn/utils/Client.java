@@ -46,7 +46,7 @@ public class Client {
   }
 
   /**
-   * Asynchronously request the Data for an Interest. This will send the 
+   * Asynchronously request the Data for an Interest. This will send the
    * Interest and return immediately; use futureData.get() to block until the
    * Data returns (see FutureData) or manage the event processing independently.
    *

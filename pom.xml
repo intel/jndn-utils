@@ -4,8 +4,27 @@
 	<groupId>com.intel.jndn.utils</groupId>
 	<artifactId>jndn-utils</artifactId>
 	<version>0.9.3</version>
-	<packaging>jar</packaging>
+	<name>jndn-utils</name>
 	<description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network</description>
+	<url>https://github.com/01org/jndn-utils</url>
+	<packaging>jar</packaging>
+	<licenses>
+		<license>
+			<name>LGPL v3</name>
+			<url>https://www.gnu.org/licenses/lgpl.html</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>Andrew Brown</name>
+			<url>http://github.com/andrewsbrown</url>
+		</developer>
+	</developers>
+	<scm>
+		<url>https://github.com/01org/jndn-utils</url>
+		<connection>scm:git:git@github.com:01org/jndn-utils.git</connection>
+		<developerConnection>scm:git:git@github.com:01org/jndn-utils.git</developerConnection>
+	</scm>
 	<dependencies>
 		<dependency>
 			<groupId>net.named-data</groupId>
@@ -31,28 +50,61 @@
 		<maven.compiler.source>1.7</maven.compiler.source>
 		<maven.compiler.target>1.7</maven.compiler.target>
 	</properties>
-	<repositories>
-		<repository>
-			<id>ubit-artifactory-or.intel.com</id>
-			<name>IT Artifactory (libs)</name>
-			<url>https://ubit-artifactory-or.intel.com/artifactory/libs-release-local</url>
-		</repository>
-		<repository>
-			<id>ubit-artifactory-or.intel.com-ext</id>
-			<name>IT Artifactory (ext)</name>
-			<url>https://ubit-artifactory-or.intel.com/artifactory/ext-releases-local</url>
-		</repository>
-	</repositories>
-	<distributionManagement>
-		<repository>
-			<id>ubit-artifactory-or.intel.com</id>
-			<name>ubit-artifactory-or.intel.com-releases</name>
-			<url>https://ubit-artifactory-or.intel.com/artifactory/libs-release-local</url>
-		</repository>
-		<snapshotRepository>
-			<id>ubit-artifactory-or.intel.com</id>
-			<name>ubit-artifactory-or.intel.com-snapshots</name>
-			<url>https://ubit-artifactory-or.intel.com/artifactory/libs-snapshot-local</url>
-		</snapshotRepository>
-	</distributionManagement>
+	<build>
+		<plugins>
+			<!-- OSSRH-directed plugins (see http://central.sonatype.org/pages/apache-maven.html) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<stagingProfileId>a80137db01223a</stagingProfileId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

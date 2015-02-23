@@ -15,8 +15,10 @@ import net.named_data.jndn.Name;
 
 /**
  * Functional interface for serving data from Server.on()
+ *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public interface OnServeInterest {
-    public Data onInterest(Name prefix, Interest interest);
+
+  public Data onInterest(Name prefix, Interest interest);
 }
