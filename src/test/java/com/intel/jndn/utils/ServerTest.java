@@ -11,13 +11,12 @@ package com.intel.jndn.utils;
 
 import com.intel.jndn.utils.event.NDNObserver;
 import com.intel.jndn.mock.MockTransport;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -27,7 +26,10 @@ import static org.junit.Assert.*;
  */
 public class ServerTest {
 
-  private static final Logger logger = LogManager.getLogger();
+  /**
+   * Setup logging
+   */
+  private static final Logger logger = Logger.getLogger(Client.class.getName());
 
   /**
    * Test on functionality
