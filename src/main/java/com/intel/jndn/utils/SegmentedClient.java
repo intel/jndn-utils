@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -63,7 +64,8 @@ public class SegmentedClient {
    * @param face
    * @param interest should include either a ChildSelector or an initial segment
    * number
-   * @return
+   * @return a list of FutureData packets; if the first segment fails, the list
+   * will contain one FutureData with the failure exception
    */
   public List<FutureData> getAsync(Face face, Interest interest) {
     // get first segment; default 0 or use a specified start segment
@@ -75,7 +77,7 @@ public class SegmentedClient {
     } catch (EncodingException e) {
       // check for interest selector if no initial segment found
       if (interest.getChildSelector() == -1) {
-        logger.warning("No child selector set for a segmented Interest; this may result in incorrect retrieval.");
+        logger.log(Level.WARNING, "No child selector set for a segmented Interest; this may result in incorrect retrieval.");
       }
     }
 
@@ -88,8 +90,8 @@ public class SegmentedClient {
     try {
       lastSegment = segments.get(0).get().getMetaInfo().getFinalBlockId().toSegment();
     } catch (ExecutionException | InterruptedException | EncodingException e) {
-      logger.severe("Failed to retrieve first segment: " + e);
-      return null;
+      logger.log(Level.SEVERE, "Failed to retrieve first segment: ", e);
+      return segments;
     }
 
     // cut interest segment off
@@ -111,7 +113,8 @@ public class SegmentedClient {
   /**
    * Asynchronously send Interests for a segmented Data packet using a default
    * interest (e.g. 2 second timeout); this will block until complete (i.e.
-   * either data is received or the interest times out).
+   * either data is received or the interest times out). See getAsync(Face face)
+   * for more information.
    *
    * @param face
    * @param name
@@ -128,7 +131,10 @@ public class SegmentedClient {
    * @param face
    * @param interest should include either a ChildSelector or an initial segment
    * number
-   * @return
+   * @return a Data packet; the name will inherit from the sent Interest, not
+   * the returned packets (TODO or should we parse from returned Data? copy
+   * first Data?) and the content will be a concatenation of all of the packet
+   * contents.
    */
   public Data getSync(Face face, Interest interest) {
     List<FutureData> segments = getAsync(face, interest);
@@ -139,7 +145,7 @@ public class SegmentedClient {
         face.processEvents();
         Thread.sleep(SLEEP_TIME_MS);
       } catch (EncodingException | IOException e) {
-        logger.warning("Failed to retrieve data: " + e);
+        logger.log(Level.WARNING, "Failed to retrieve data: ", e);
         return null;
       } catch (InterruptedException ex) {
         // do nothing
@@ -152,7 +158,7 @@ public class SegmentedClient {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        logger.warning("Failed to parse retrieved data: " + e);
+        logger.log(Level.WARNING, "Failed to parse retrieved data: ", e);
         return null;
       }
     }
@@ -165,7 +171,8 @@ public class SegmentedClient {
   /**
    * Synchronously retrieve the Data for a Name using a default interest (e.g. 2
    * second timeout); this will block until complete (i.e. either data is
-   * received or the interest times out).
+   * received or the interest times out). See getSync(Face face) for more
+   * information.
    *
    * @param face
    * @param name

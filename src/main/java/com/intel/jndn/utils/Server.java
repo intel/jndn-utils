@@ -17,6 +17,7 @@ import com.intel.jndn.utils.event.NDNEvent;
 import com.intel.jndn.utils.event.NDNObservable;
 import com.intel.jndn.utils.event.NDNObserver;
 import java.io.IOException;
+import java.util.logging.Level;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
@@ -141,7 +142,7 @@ public class Server {
           face.processEvents();
         }
       } catch (IOException | EncodingException e) {
-        logger.warning("Failed to process events." + e);
+        logger.log(Level.WARNING, "Failed to process events.", e);
         event.fromPacket(e);
       }
       sleep();
@@ -228,7 +229,7 @@ public class Server {
               face.processEvents();
             }
           } catch (IOException | EncodingException e) {
-            logger.warning("Failed to process events." + e);
+            logger.log(Level.WARNING, "Failed to process events.", e);
             eventHandler.notify(e);
           }
           sleep();
@@ -326,7 +327,7 @@ public class Server {
               face.processEvents();
             }
           } catch (IOException | EncodingException e) {
-            logger.warning("Failed to process events." + e);
+            logger.log(Level.WARNING, "Failed to process events.", e);
             eventHandler.notify(e);
           }
           sleep();

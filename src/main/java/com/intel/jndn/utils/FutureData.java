@@ -179,7 +179,7 @@ public class FutureData implements Future<Data> {
     }
     // case: error
     if (error != null) {
-      throw new ExecutionException("Future rejected.", error);
+      throw new ExecutionException("Future rejected with error.", error);
     }
     // case: packet
     return data;

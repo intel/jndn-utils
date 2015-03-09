@@ -16,6 +16,7 @@ package com.intel.jndn.utils;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -74,7 +75,7 @@ public class Client {
         }
       });
     } catch (IOException e) {
-      logger.warning("IO failure while sending interest: " + e);
+      logger.log(Level.WARNING, "IO failure while sending interest: ", e);
       futureData.reject(e);
     }
 
@@ -115,7 +116,7 @@ public class Client {
       logger.fine("Request time (ms): " + (System.currentTimeMillis() - startTime));
       return data;
     } catch (ExecutionException | InterruptedException e) {
-      logger.warning("Failed to retrieve data: " + e);
+      logger.log(Level.WARNING, "Failed to retrieve data: ", e);
       return null;
     }
   }
