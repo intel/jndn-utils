@@ -14,8 +14,14 @@
 package com.intel.jndn.utils;
 
 import com.intel.jndn.mock.MockFace;
+import com.intel.jndn.mock.MockTransport;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.Name.Component;
@@ -32,8 +38,12 @@ import static org.junit.Assert.*;
  */
 public class SegmentedClientTest {
 
+  private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
+
   /**
    * Test of getSync method, of class SegmentedClient.
+   *
+   * @throws java.lang.Exception
    */
   @Test
   public void testGetSync() throws Exception {
@@ -60,5 +70,28 @@ public class SegmentedClientTest {
 
     Data data = SegmentedClient.getDefault().getSync(face, new Name("/segmented/data").appendSegment(0));
     assertEquals(10, data.getContent().size());
+  }
+
+  /**
+   * Test that a failed request fails with an exception.
+   *
+   * @throws java.lang.Exception
+   */
+  @Test(expected = ExecutionException.class)
+  public void testFailureToRetrieve() throws Exception {
+    // setup face
+    MockTransport transport = new MockTransport();
+    Face face = new Face(transport, null);
+
+    // retrieve non-existent data, should timeout
+    logger.info("Client expressing interest asynchronously: /test/no-data");
+    List<Future<Data>> futureSegments = SegmentedClient.getDefault().getAsyncList(face, new Name("/test/no-data"));
+    
+    // the list of future packets should be initialized
+    assertEquals(1, futureSegments.size());
+    assertTrue(futureSegments.get(0).isDone());
+
+    // should throw error
+    futureSegments.get(0).get();
   }
 }

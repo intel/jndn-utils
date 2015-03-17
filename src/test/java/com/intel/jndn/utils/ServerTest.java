@@ -33,7 +33,7 @@ public class ServerTest {
   /**
    * Setup logging
    */
-  private static final Logger logger = Logger.getLogger(Client.class.getName());
+  private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
 
   /**
    * Test on functionality

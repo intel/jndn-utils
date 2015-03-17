@@ -13,11 +13,13 @@
  */
 package com.intel.jndn.utils;
 
-import java.io.ByteArrayOutputStream;
+import com.intel.jndn.utils.client.SegmentedFutureData;
+import com.intel.jndn.utils.client.FutureData;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
@@ -25,7 +27,6 @@ import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.util.Blob;
 
 /**
  * Provide a client to simplify retrieving segmented Data packets over the NDN
@@ -38,14 +39,13 @@ import net.named_data.jndn.util.Blob;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class SegmentedClient {
+public class SegmentedClient implements Client {
 
   private static SegmentedClient defaultInstance;
   private static final Logger logger = Logger.getLogger(SegmentedClient.class.getName());
-  private static final int SLEEP_TIME_MS = 10;
 
   /**
-   * Singleton access for simpler client use
+   * Singleton access for simpler client use.
    *
    * @return
    */
@@ -67,7 +67,37 @@ public class SegmentedClient {
    * @return a list of FutureData packets; if the first segment fails, the list
    * will contain one FutureData with the failure exception
    */
-  public List<FutureData> getAsync(Face face, Interest interest) {
+  @Override
+  public Future<Data> getAsync(Face face, Interest interest) {
+    List<Future<Data>> segments = getAsyncList(face, interest);
+    return new SegmentedFutureData(interest.getName().getPrefix(-1), segments);
+  }
+
+ /**
+   * Asynchronously send Interest packets for a segmented result; will block
+   * until the first packet is received and then send remaining interests until
+   * the specified FinalBlockId.
+   *
+   * @param face
+   * @param name
+   * @return an aggregated data packet from all received segments
+   */
+  public Future<Data> getAsync(Face face, Name name) {
+    return getAsync(face, SimpleClient.getDefaultInterest(name));
+  }
+
+  /**
+   * Asynchronously send Interest packets for a segmented result; will block
+   * until the first packet is received and then send remaining interests until
+   * the specified FinalBlockId.
+   *
+   * @param face
+   * @param interest should include either a ChildSelector or an initial segment
+   * number
+   * @return a list of FutureData packets; if the first segment fails, the list
+   * will contain one FutureData with the failure exception
+   */
+  public List<Future<Data>> getAsyncList(Face face, Interest interest) {
     // get first segment; default 0 or use a specified start segment
     long firstSegment = 0;
     boolean specifiedSegment = false;
@@ -78,12 +108,13 @@ public class SegmentedClient {
       // check for interest selector if no initial segment found
       if (interest.getChildSelector() == -1) {
         logger.log(Level.WARNING, "No child selector set for a segmented Interest; this may result in incorrect retrieval.");
+        // allow this interest to pass without a segment marker since it may still succeed
       }
     }
 
     // setup segments
-    final List<FutureData> segments = new ArrayList<>();
-    segments.add(Client.getDefault().getAsync(face, interest));
+    final List<Future<Data>> segments = new ArrayList<>();
+    segments.add(SimpleClient.getDefault().getAsync(face, interest));
 
     // retrieve first packet to find last segment value
     long lastSegment;
@@ -103,7 +134,7 @@ public class SegmentedClient {
     for (long i = firstSegment + 1; i <= lastSegment; i++) {
       Interest segmentedInterest = new Interest(interest);
       segmentedInterest.getName().appendSegment(i);
-      FutureData futureData = Client.getDefault().getAsync(face, segmentedInterest);
+      Future<Data> futureData = SimpleClient.getDefault().getAsync(face, segmentedInterest);
       segments.add((int) i, futureData);
     }
 
@@ -120,8 +151,8 @@ public class SegmentedClient {
    * @param name
    * @return
    */
-  public List<FutureData> getAsync(Face face, Name name) {
-    return getAsync(face, Client.getDefaultInterest(name));
+  public List<Future<Data>> getAsyncList(Face face, Name name) {
+    return getAsyncList(face, SimpleClient.getDefaultInterest(name));
   }
 
   /**
@@ -132,40 +163,18 @@ public class SegmentedClient {
    * @param interest should include either a ChildSelector or an initial segment
    * number
    * @return a Data packet; the name will inherit from the sent Interest, not
-   * the returned packets (TODO or should we parse from returned Data? copy
-   * first Data?) and the content will be a concatenation of all of the packet
-   * contents.
+   * the returned packets and the content will be a concatenation of all of the
+   * packet contents.
+   * @throws java.io.IOException
    */
-  public Data getSync(Face face, Interest interest) {
-    List<FutureData> segments = getAsync(face, interest);
-
-    // process events until complete
-    while (!isSegmentListComplete(segments)) {
-      try {
-        face.processEvents();
-        Thread.sleep(SLEEP_TIME_MS);
-      } catch (EncodingException | IOException e) {
-        logger.log(Level.WARNING, "Failed to retrieve data: ", e);
-        return null;
-      } catch (InterruptedException ex) {
-        // do nothing
-      }
+  @Override
+  public Data getSync(Face face, Interest interest) throws IOException {  
+    try {
+      return getAsync(face, interest).get();
+    } catch (ExecutionException | InterruptedException e) {
+      logger.log(Level.WARNING, "Failed to retrieve data.", e);
+      throw new IOException("Failed to retrieve data.", e);
     }
-
-    // build final blob
-    ByteArrayOutputStream content = new ByteArrayOutputStream();
-    for (FutureData futureData : segments) {
-      try {
-        content.write(futureData.get().getContent().getImmutableArray());
-      } catch (ExecutionException | IOException | InterruptedException e) {
-        logger.log(Level.WARNING, "Failed to parse retrieved data: ", e);
-        return null;
-      }
-    }
-
-    Data data = new Data(interest.getName()); // TODO this name may not be correct; may need to contain additional suffixes
-    data.setContent(new Blob(content.toByteArray()));
-    return data;
   }
 
   /**
@@ -177,9 +186,10 @@ public class SegmentedClient {
    * @param face
    * @param name
    * @return
+   * @throws java.io.IOException
    */
-  public Data getSync(Face face, Name name) {
-    return getSync(face, Client.getDefaultInterest(name));
+  public Data getSync(Face face, Name name) throws IOException {
+    return getSync(face, SimpleClient.getDefaultInterest(name));
   }
 
   /**
@@ -192,20 +202,5 @@ public class SegmentedClient {
    */
   public static boolean hasSegment(Name name) {
     return name.get(-1).getValue().buf().get(0) == 0x00;
-  }
-
-  /**
-   * Check if a list of segments have returned from the network.
-   *
-   * @param segments
-   * @return
-   */
-  protected boolean isSegmentListComplete(List<FutureData> segments) {
-    for (FutureData futureData : segments) {
-      if (!futureData.isDone()) {
-        return false;
-      }
-    }
-    return true;
   }
 }
