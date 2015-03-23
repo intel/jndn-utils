@@ -16,7 +16,6 @@ package com.intel.jndn.utils.server;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +24,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 
 /**
+ * Helper for segmenting an input stream into a list of Data packets.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -62,17 +62,17 @@ public class SegmentedServerHelper {
     int numPackets = (int) Math.ceil((double) numBytes / segmentSize);
     ByteBuffer buffer = ByteBuffer.wrap(buffer_, 0, numBytes);
     Name.Component lastSegment = Name.Component.fromNumberWithMarker(numPackets - 1, 0x00);
-    
+
     for (int i = 0; i < numPackets; i++) {
       Data segment = new Data(template);
       segment.getName().appendSegment(i);
       segment.getMetaInfo().setFinalBlockId(lastSegment);
       byte[] content = new byte[Math.min(segmentSize, buffer.remaining())];
       buffer.get(content);
-      segment.setContent(new Blob(content)); 
+      segment.setContent(new Blob(content));
       segments.add(segment);
     }
-    
+
     return segments;
   }
 
