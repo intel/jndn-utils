@@ -16,6 +16,7 @@ package com.intel.jndn.utils.server;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,18 +58,21 @@ public class SegmentedServerHelper {
   public static List<Data> segment(Data template, InputStream bytes, int segmentSize) throws IOException {
     List<Data> segments = new ArrayList<>();
     byte[] buffer_ = readAll(bytes);
-    ByteBuffer buffer = ByteBuffer.wrap(buffer_, 0, buffer_.length);
-    int end = (int) Math.floor(buffer_.length / (segmentSize + 1));
-    Name.Component lastSegment = Name.Component.fromNumberWithMarker(end, 0x00);
-    for (int i = 0; i <= end; i++) {
+    int numBytes = buffer_.length;
+    int numPackets = (int) Math.ceil((double) numBytes / segmentSize);
+    ByteBuffer buffer = ByteBuffer.wrap(buffer_, 0, numBytes);
+    Name.Component lastSegment = Name.Component.fromNumberWithMarker(numPackets - 1, 0x00);
+    
+    for (int i = 0; i < numPackets; i++) {
       Data segment = new Data(template);
       segment.getName().appendSegment(i);
       segment.getMetaInfo().setFinalBlockId(lastSegment);
-      byte[] content = new byte[segmentSize];
+      byte[] content = new byte[Math.min(segmentSize, buffer.remaining())];
       buffer.get(content);
-      segment.setContent(new Blob(content));
+      segment.setContent(new Blob(content)); 
       segments.add(segment);
     }
+    
     return segments;
   }
 
@@ -81,12 +85,13 @@ public class SegmentedServerHelper {
    */
   public static byte[] readAll(InputStream bytes) throws IOException {
     ByteArrayOutputStream builder = new ByteArrayOutputStream();
-    byte[] buffer = new byte[4096];
-    int read = 0;
-    while ((read = bytes.read(buffer)) != -1) {
-      builder.write(buffer);
+    int read = bytes.read();
+    while (read != -1) {
+      builder.write(read);
+      read = bytes.read();
     }
     builder.flush();
+    bytes.close();
     return builder.toByteArray();
   }
 }
