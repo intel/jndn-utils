@@ -11,7 +11,7 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
  * more details.
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.client;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -24,23 +24,23 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 
 /**
- * Reference to a Packet that has yet to be returned from the network; see use
- * in WindowBuffer.java. Usage:
+ * Reference to a Packet that has yet to be returned from the network. Usage:
+ *
  * <pre><code>
- * FuturePacket futurePacket = new FuturePacket(face);
+ * FutureData futureData = new FutureData(face, interest.getName());
  * face.expressInterest(interest, new OnData(){
- *	... futurePacket.resolve(data); ...
+ *	... futureData.resolve(data); ...
  * }, new OnTimeout(){
- *  ... futurePacket.reject(new TimeoutException());
+ *  ... futureData.reject(new TimeoutException());
  * });
- * Packet resolvedPacket = futurePacket.get(); // will block and call face.processEvents() until complete
+ * Data resolvedData = futureData.get(); // will block and call face.processEvents() until complete
  * </code></pre>
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class FutureData implements Future<Data> {
 
-  private final Face face;
+  protected final Face face;
   private final Name name;
   private Data data;
   private boolean cancelled = false;
@@ -58,7 +58,7 @@ public class FutureData implements Future<Data> {
   }
 
   /**
-   * Get the packet interest name
+   * Get the Interest name.
    *
    * @return
    */
@@ -95,7 +95,7 @@ public class FutureData implements Future<Data> {
    */
   @Override
   public boolean isDone() {
-    return data != null || error != null;
+    return data != null || error != null || isCancelled();
   }
 
   /**
@@ -125,7 +125,8 @@ public class FutureData implements Future<Data> {
    */
   @Override
   public Data get() throws InterruptedException, ExecutionException {
-    while (!isDone() && !isCancelled()) {
+    while (!isDone()) {
+      // process face events
       try {
         synchronized (face) {
           face.processEvents();
@@ -134,15 +135,17 @@ public class FutureData implements Future<Data> {
         throw new ExecutionException("Failed to retrieve packet.", e);
       }
     }
+
     // case: cancelled
     if (cancelled) {
       throw new InterruptedException("Interrupted by user.");
     }
+
     // case: error
     if (error != null) {
       throw new ExecutionException("Future rejected with error.", error);
     }
-    // case: packet
+
     return data;
   }
 
@@ -160,7 +163,9 @@ public class FutureData implements Future<Data> {
   public Data get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     long interval = TimeUnit.MILLISECONDS.convert(timeout, unit);
     long endTime = System.currentTimeMillis() + interval;
-    while (!isDone() && !isCancelled() && System.currentTimeMillis() < endTime) {
+    long currentTime = System.currentTimeMillis();
+    while (!isDone() && !isCancelled() && currentTime <= endTime) {
+      // process face events
       try {
         synchronized (face) {
           face.processEvents();
@@ -168,20 +173,25 @@ public class FutureData implements Future<Data> {
       } catch (EncodingException | IOException e) {
         throw new ExecutionException("Failed to retrieve packet.", e);
       }
+
+      currentTime = System.currentTimeMillis();
     }
-    // case: timed out
-    if (System.currentTimeMillis() < endTime) {
-      throw new TimeoutException("Timed out");
-    }
+
     // case: cancelled
     if (cancelled) {
       throw new InterruptedException("Interrupted by user.");
     }
+
     // case: error
     if (error != null) {
       throw new ExecutionException("Future rejected with error.", error);
     }
-    // case: packet
+
+    // case: timed out
+    if (currentTime > endTime) {
+      throw new TimeoutException("Timed out.");
+    }
+
     return data;
   }
 }

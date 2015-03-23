@@ -16,7 +16,9 @@ package com.intel.jndn.utils;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.intel.jndn.mock.MockTransport;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
@@ -28,20 +30,21 @@ import org.junit.rules.ExpectedException;
 
 /**
  * Test Client.java
+ *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class ClientTest {
 
-  /**
-   * Setup logging
-   */
-  private static final Logger logger = Logger.getLogger(Client.class.getName());
+  private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
+  public ExpectedException thrown = ExpectedException.none();
 
   /**
    * Test retrieving data synchronously
+   *
+   * @throws java.io.IOException
    */
   @Test
-  public void testGetSync() {
+  public void testGetSync() throws IOException {
     // setup face
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
@@ -53,7 +56,7 @@ public class ClientTest {
 
     // retrieve data
     logger.info("Client expressing interest synchronously: /test/sync");
-    Client client = new Client();
+    SimpleClient client = new SimpleClient();
     Data data = client.getSync(face, new Name("/test/sync"));
     assertEquals(new Blob("...").buf(), data.getContent().buf());
   }
@@ -76,9 +79,9 @@ public class ClientTest {
 
     // retrieve data
     logger.info("Client expressing interest asynchronously: /test/async");
-    Client client = new Client();
-    FutureData futureData = client.getAsync(face, new Name("/test/async"));
-    
+    SimpleClient client = new SimpleClient();
+    Future<Data> futureData = client.getAsync(face, new Name("/test/async"));
+
     assertTrue(!futureData.isDone());
     futureData.get();
     assertTrue(futureData.isDone());
@@ -87,10 +90,10 @@ public class ClientTest {
 
   /**
    * Test that asynchronous client times out correctly
-   * 
-   * @throws InterruptedException 
+   *
+   * @throws InterruptedException
    */
-  @Test
+  @Test(expected = TimeoutException.class)
   public void testTimeout() throws InterruptedException, ExecutionException, TimeoutException {
     // setup face
     MockTransport transport = new MockTransport();
@@ -98,9 +101,9 @@ public class ClientTest {
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/timeout");
-    FutureData futureData = Client.getDefault().getAsync(face, new Name("/test/timeout"));
-    
-    ExpectedException.none().expect(TimeoutException.class);
+    Future<Data> futureData = SimpleClient.getDefault().getAsync(face, new Name("/test/timeout"));
+
+    // expect an exception
     futureData.get(50, TimeUnit.MILLISECONDS);
   }
 }
