@@ -58,15 +58,16 @@ public class SegmentedServerHelper {
     List<Data> segments = new ArrayList<>();
     byte[] buffer_ = readAll(bytes);
     ByteBuffer buffer = ByteBuffer.wrap(buffer_, 0, buffer_.length);
-    int end = (int) Math.floor(buffer_.length / segmentSize);
+    int end = Math.max((int) Math.floor(buffer_.length / segmentSize), 1);
     Name.Component lastSegment = Name.Component.fromNumberWithMarker(end, 0x00);
-    for (int i = 0; i <= end; i++) {
+    for (int i = 0; i < end; i++) {
       Data segment = new Data(template);
       segment.getName().appendSegment(i);
       segment.getMetaInfo().setFinalBlockId(lastSegment);
       byte[] content = new byte[segmentSize];
-      buffer.get(content, i * segmentSize, segmentSize);
+      buffer.get(content);
       segment.setContent(new Blob(content));
+      segments.add(segment);
     }
     return segments;
   }
