@@ -33,7 +33,7 @@ import org.junit.rules.ExpectedException;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class ClientTest {
+public class SimpleClientTest {
 
   private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
   public ExpectedException thrown = ExpectedException.none();
