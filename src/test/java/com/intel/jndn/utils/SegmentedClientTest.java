@@ -15,6 +15,7 @@ package com.intel.jndn.utils;
 
 import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.mock.MockTransport;
+import com.intel.jndn.utils.client.SegmentedFutureData;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -86,12 +87,32 @@ public class SegmentedClientTest {
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/no-data");
     List<Future<Data>> futureSegments = SegmentedClient.getDefault().getAsyncList(face, new Name("/test/no-data"));
-    
+
     // the list of future packets should be initialized
     assertEquals(1, futureSegments.size());
     assertTrue(futureSegments.get(0).isDone());
 
     // should throw error
     futureSegments.get(0).get();
+  }
+
+  /**
+   * Ensure Name of the returned Data is the same as was requested; identifies
+   * bug where the last Name.Component was always cut off.
+   *
+   * @throws InterruptedException
+   * @throws ExecutionException
+   */
+  @Test
+  public void testNameShorteningLogic() throws InterruptedException, ExecutionException {
+    MockFace face = new MockFace();
+    Name name = new Name("/test/123");
+    Data data = new Data(name);
+    data.setContent(new Blob("...."));
+    face.addResponse(name, data);
+
+    SegmentedFutureData future = (SegmentedFutureData) SegmentedClient.getDefault().getAsync(face, name);
+    assertEquals(name.toUri(), future.getName().toUri());
+    assertEquals(name.toUri(), future.get().getName().toUri());
   }
 }

@@ -14,7 +14,6 @@
 package com.intel.jndn.utils;
 
 import com.intel.jndn.utils.client.SegmentedFutureData;
-import com.intel.jndn.utils.client.FutureData;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,23 +62,26 @@ public class SegmentedClient implements Client {
    *
    * @param face
    * @param interest should include either a ChildSelector or an initial segment
-   * number
+   * number; the initial segment number will be cut off in the de-segmented
+   * packet.
    * @return a list of FutureData packets; if the first segment fails, the list
    * will contain one FutureData with the failure exception
    */
   @Override
   public Future<Data> getAsync(Face face, Interest interest) {
     List<Future<Data>> segments = getAsyncList(face, interest);
-    return new SegmentedFutureData(interest.getName().getPrefix(-1), segments);
+    Name name = hasSegment(interest.getName()) ? interest.getName().getPrefix(-1) : interest.getName();
+    return new SegmentedFutureData(name, segments);
   }
 
- /**
+  /**
    * Asynchronously send Interest packets for a segmented result; will block
    * until the first packet is received and then send remaining interests until
    * the specified FinalBlockId.
    *
    * @param face
-   * @param name
+   * @param name the {@link Name} of the packet to retrieve using a default
+   * interest
    * @return an aggregated data packet from all received segments
    */
   public Future<Data> getAsync(Face face, Name name) {
@@ -168,7 +170,7 @@ public class SegmentedClient implements Client {
    * @throws java.io.IOException
    */
   @Override
-  public Data getSync(Face face, Interest interest) throws IOException {  
+  public Data getSync(Face face, Interest interest) throws IOException {
     try {
       return getAsync(face, interest).get();
     } catch (ExecutionException | InterruptedException e) {
