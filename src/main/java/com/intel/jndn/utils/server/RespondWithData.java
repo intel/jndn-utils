@@ -11,7 +11,7 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
  * more details.
  */
-package com.intel.jndn.utils;
+package com.intel.jndn.utils.server;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
@@ -22,7 +22,7 @@ import net.named_data.jndn.Name;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public interface OnServeInterest {
+public interface RespondWithData {
 
-  public Data onInterest(Name prefix, Interest interest);
+  public Data onInterest(Name prefix, Interest interest) throws Exception;
 }

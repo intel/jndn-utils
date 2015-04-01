@@ -24,7 +24,11 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 
 /**
- * Helper for segmenting an input stream into a list of Data packets.
+ * Helper for segmenting an input stream into a list of Data packets. Current
+ * use of the default segment size of 4096 (only for
+ * {@link #segment(net.named_data.jndn.Data, java.io.InputStream)} is based on
+ * several assumptions: NDN packet size was limited to 8000 at the time this was
+ * written and signature size is unknown.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -36,10 +40,11 @@ public class SegmentedServerHelper {
    * Segment a stream of bytes into a list of Data packets; this must read all
    * the bytes first in order to determine the end segment for FinalBlockId.
    *
-   * @param template
-   * @param bytes
-   * @return
-   * @throws IOException
+   * @param template the {@link Data} packet to use for the segment {@link Name},
+   * {@link net.named_data.jndn.MetaInfo}, etc.
+   * @param bytes an {@link InputStream} to the bytes to segment
+   * @return a list of segmented {@link Data} packets
+   * @throws IOException if the stream fails
    */
   public static List<Data> segment(Data template, InputStream bytes) throws IOException {
     return segment(template, bytes, DEFAULT_SEGMENT_SIZE);
@@ -49,11 +54,11 @@ public class SegmentedServerHelper {
    * Segment a stream of bytes into a list of Data packets; this must read all
    * the bytes first in order to determine the end segment for FinalBlockId.
    *
-   * @param template
-   * @param bytes
-   * @param segmentSize
-   * @return
-   * @throws IOException
+   * @param template the {@link Data} packet to use for the segment {@link Name},
+   * {@link net.named_data.jndn.MetaInfo}, etc.
+   * @param bytes an {@link InputStream} to the bytes to segment
+   * @return a list of segmented {@link Data} packets
+   * @throws IOException if the stream fails
    */
   public static List<Data> segment(Data template, InputStream bytes, int segmentSize) throws IOException {
     List<Data> segments = new ArrayList<>();
@@ -77,11 +82,11 @@ public class SegmentedServerHelper {
   }
 
   /**
-   * Read all the bytes in an input stream.
+   * Read all of the bytes in an input stream.
    *
-   * @param bytes
-   * @return
-   * @throws IOException
+   * @param bytes the {@link InputStream} of bytes to read
+   * @return an array of all bytes retrieved from the stream
+   * @throws IOException if the stream fails
    */
   public static byte[] readAll(InputStream bytes) throws IOException {
     ByteArrayOutputStream builder = new ByteArrayOutputStream();

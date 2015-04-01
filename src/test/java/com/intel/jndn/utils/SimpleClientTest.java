@@ -16,6 +16,7 @@ package com.intel.jndn.utils;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.intel.jndn.mock.MockTransport;
+import com.intel.jndn.utils.client.FutureData;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -105,5 +106,23 @@ public class SimpleClientTest {
 
     // expect an exception
     futureData.get(50, TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * Test that a sync failed request fails with an exception.
+   */
+  @Test(expected = ExecutionException.class)
+  public void testAsyncFailureToRetrieve() throws InterruptedException, ExecutionException {
+    Future future = SimpleClient.getDefault().getAsync(new Face(), new Name("/test/no-data"));
+    assertTrue(future.isDone());
+    future.get();
+  }
+
+  /**
+   * Test that a sync failed request fails with an exception.
+   */
+  @Test(expected = IOException.class)
+  public void testSyncFailureToRetrieve() throws IOException {
+    SimpleClient.getDefault().getSync(new Face(), new Name("/test/no-data"));
   }
 }

@@ -97,6 +97,14 @@ public class SegmentedClientTest {
   }
 
   /**
+   * Test that a sync failed request fails with an exception.
+   */
+  @Test(expected = IOException.class)
+  public void testSyncFailureToRetrieve() throws IOException {
+    SegmentedClient.getDefault().getSync(new MockFace(), new Name("/test/no-data"));
+  }
+
+  /**
    * Ensure Name of the returned Data is the same as was requested; identifies
    * bug where the last Name.Component was always cut off.
    *
@@ -115,4 +123,5 @@ public class SegmentedClientTest {
     assertEquals(name.toUri(), future.getName().toUri());
     assertEquals(name.toUri(), future.get().getName().toUri());
   }
+
 }
