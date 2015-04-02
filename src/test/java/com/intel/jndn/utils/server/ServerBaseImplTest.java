@@ -53,6 +53,13 @@ public class ServerBaseImplTest {
   public void testGetPrefix() {
     assertNotNull(instance.getPrefix());
   }
+  
+  /**
+   * Test of getRegisteredPrefixId method, of class ServerBaseImpl
+   */
+  public void testGetRegisteredPrefixId(){
+    assertEquals(ServerBaseImpl.UNREGISTERED, instance.getRegisteredPrefixId());
+  }
 
   /**
    * Test of register method, of class ServerBaseImpl.

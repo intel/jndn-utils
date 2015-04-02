@@ -32,11 +32,12 @@ import net.named_data.jndn.encoding.EncodingException;
  */
 public abstract class ServerBaseImpl implements Server {
 
+  public static final long UNREGISTERED = -1;
   private static final Logger logger = Logger.getLogger(ServerBaseImpl.class.getName());
   private final Face face;
   private final Name prefix;
   private final List<PipelineStage> pipeline = new ArrayList<>();
-  private boolean registered = false;
+  private long registeredPrefixId = UNREGISTERED;
 
   /**
    * Build the base server; register() must run separately and is run
@@ -60,10 +61,18 @@ public abstract class ServerBaseImpl implements Server {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  public long getRegisteredPrefixId() {
+    return registeredPrefixId;
+  }
+
+  /**
    * @return true if the server has registered a prefix on the face
    */
   public boolean isRegistered() {
-    return registered;
+    return registeredPrefixId == UNREGISTERED;
   }
 
   /**
@@ -72,17 +81,15 @@ public abstract class ServerBaseImpl implements Server {
    * @throws java.io.IOException if IO fails
    */
   public void register() throws IOException {
-    registered = true;
     try {
-      face.registerPrefix(prefix, this, new OnRegisterFailed() {
+      registeredPrefixId = face.registerPrefix(prefix, this, new OnRegisterFailed() {
         @Override
         public void onRegisterFailed(Name prefix) {
-          registered = false;
+          registeredPrefixId = UNREGISTERED;
           logger.log(Level.SEVERE, "Failed to register prefix: " + prefix.toUri());
         }
       }, new ForwardingFlags());
     } catch (net.named_data.jndn.security.SecurityException e) {
-      registered = false;
       throw new IOException("Failed to communicate to face due to security error", e);
     }
   }

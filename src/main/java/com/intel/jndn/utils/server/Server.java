@@ -35,6 +35,12 @@ public interface Server extends Runnable, OnInterest {
   public Name getPrefix();
 
   /**
+   * @return the registered prefix ID of the server on the {@link Face} or -1 if
+   * unregistered
+   */
+  public long getRegisteredPrefixId();
+
+  /**
    * Add a stage to the server pipeline. Each stage should be processed once the
    * server has the {@link Data} packet available to send (e.g. after a callback
    * has produced a packet); also, stages should be processed in the order they
