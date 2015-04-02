@@ -72,7 +72,7 @@ public abstract class ServerBaseImpl implements Server {
    * @return true if the server has registered a prefix on the face
    */
   public boolean isRegistered() {
-    return registeredPrefixId == UNREGISTERED;
+    return registeredPrefixId != UNREGISTERED;
   }
 
   /**
