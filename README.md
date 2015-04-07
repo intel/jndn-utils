@@ -15,9 +15,21 @@ With Maven, add the following to your POM:
 ## Use
 Use `Client` or `SegmentedClient` to retrieve data from the network. For example:
 ```
-Data data1 = Client.getDefault().getSync(face, name);
-Data data2 = SegmentedClient.getDefault().getSync(face, name);
+// retrieve a single Data packet synchronously, will block until complete
+Data singleData = Client.getDefault().getSync(face, name);
+
+// retrieve a segmented Data packet (i.e. with a last Component containing a segment number and a valid FinalBlockId) by name
+Data segmentedData = SegmentedClient.getDefault().getSync(face, name);
+
+// segment and serve Data packet under a specific prefix
+RepositoryServer server = new SegmentedServer(face, prefix);
+server.serve(largeDataPacket); // call face.processEvents() in an event loop
+
+// add signing to the last server example; this pipeline stage will sign each Data packet prior to being encoded for transport
+server.addPipelineStage(new SigningStage(keyChain, signingCertificateName));
 ```
+
+For full API, see the [Javadoc](http://01org.github.io/jndn-utils/).
 
 ## License
 Copyright © 2015, Intel Corporation.
