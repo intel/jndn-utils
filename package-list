@@ -1,0 +1,5 @@
+com.intel.jndn.utils
+com.intel.jndn.utils.client
+com.intel.jndn.utils.repository
+com.intel.jndn.utils.server
+com.intel.jndn.utils.server.pipeline
