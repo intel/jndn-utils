@@ -13,19 +13,22 @@ With Maven, add the following to your POM:
 ```
 
 ## Use
-Use `Client` or `SegmentedClient` to retrieve data from the network. For example:
+Use `SimpleClient` or `SegmentedClient` to retrieve data from the network. For example:
 ```
 // retrieve a single Data packet synchronously, will block until complete
 Data singleData = Client.getDefault().getSync(face, name);
 
 // retrieve a segmented Data packet (i.e. with a last Component containing a segment number and a valid FinalBlockId) by name
 Data segmentedData = SegmentedClient.getDefault().getSync(face, name);
+```
 
+Use `SimpleServer` or `SegmentedServer` to serve data on the network. For example:
+```
 // segment and serve Data packet under a specific prefix
 RepositoryServer server = new SegmentedServer(face, prefix);
 server.serve(largeDataPacket); // call face.processEvents() in an event loop
 
-// add signing to the last server example; this pipeline stage will sign each Data packet prior to being encoded for transport
+// add signatures; this pipeline stage will sign each Data packet prior to being encoded for transport
 server.addPipelineStage(new SigningStage(keyChain, signingCertificateName));
 ```
 
