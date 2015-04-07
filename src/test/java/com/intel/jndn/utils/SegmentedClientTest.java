@@ -31,6 +31,7 @@ import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  * Test SegmentedClient functionality.
@@ -40,6 +41,12 @@ import static org.junit.Assert.*;
 public class SegmentedClientTest {
 
   private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
+  private MockFace face;
+  
+  @Before
+  public void beforeTest(){
+    face = new MockFace();
+  }
 
   /**
    * Test of getSync method, of class SegmentedClient.
@@ -48,7 +55,6 @@ public class SegmentedClientTest {
    */
   @Test
   public void testGetSync() throws Exception {
-    MockFace face = new MockFace();
     face.registerPrefix(new Name("/segmented/data"), new OnInterest() {
       private int count = 0;
       private int max = 9;
@@ -80,10 +86,6 @@ public class SegmentedClientTest {
    */
   @Test(expected = ExecutionException.class)
   public void testFailureToRetrieve() throws Exception {
-    // setup face
-    MockTransport transport = new MockTransport();
-    Face face = new Face(transport, null);
-
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/no-data");
     List<Future<Data>> futureSegments = SegmentedClient.getDefault().getAsyncList(face, new Name("/test/no-data"));
@@ -101,7 +103,7 @@ public class SegmentedClientTest {
    */
   @Test(expected = IOException.class)
   public void testSyncFailureToRetrieve() throws IOException {
-    SegmentedClient.getDefault().getSync(new MockFace(), new Name("/test/no-data"));
+    SegmentedClient.getDefault().getSync(face, new Name("/test/no-data"));
   }
 
   /**
@@ -113,15 +115,61 @@ public class SegmentedClientTest {
    */
   @Test
   public void testNameShorteningLogic() throws InterruptedException, ExecutionException {
-    MockFace face = new MockFace();
-    Name name = new Name("/test/123");
-    Data data = new Data(name);
+    Name name = new Name("/test/123").appendSegment(15);
+    Data data = buildSegmentedData(name);
     data.setContent(new Blob("...."));
     face.addResponse(name, data);
 
     SegmentedFutureData future = (SegmentedFutureData) SegmentedClient.getDefault().getAsync(face, name);
-    assertEquals(name.toUri(), future.getName().toUri());
-    assertEquals(name.toUri(), future.get().getName().toUri());
+    assertEquals(name.getPrefix(-1).toUri(), future.getName().toUri());
+    assertEquals(name.getPrefix(-1).toUri(), future.get().getName().toUri());
+  }
+
+  /**
+   * Verify that Data packets with no content do not cause errors; identifies
+   * bug.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testNoContent() throws Exception {
+    Name name = new Name("/test/no-content").appendSegment(0);
+    Data data = buildSegmentedData(name);
+    face.addResponse(name, data);
+
+    Future<Data> result = SegmentedClient.getDefault().getAsync(face, name);
+    assertEquals("/test/no-content", result.get().getName().toUri());
+    assertEquals("", result.get().getContent().toString());
+  }
+
+  /**
+   * If a Data packet does not have a FinalBlockId, the SegmentedClient should
+   * just return the packet.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testNoFinalBlockId() throws Exception {
+    Name name = new Name("/test/no-final-block-id");
+    Data data = new Data(name);
+    data.setContent(new Blob("1"));
+    face.addResponse(name, data);
+
+    Future<Data> result = SegmentedClient.getDefault().getAsync(face, name);
+    assertEquals("/test/no-final-block-id", result.get().getName().toUri());
+    assertEquals("1", result.get().getContent().toString());
+  }
+
+  /**
+   * Helper method, sets FinalBlockId from last Name component
+   *
+   * @param name
+   * @return
+   */
+  private Data buildSegmentedData(Name name) {
+    Data data = new Data(name);
+    data.getMetaInfo().setFinalBlockId(name.get(-1));
+    return data;
   }
 
 }

@@ -13,6 +13,7 @@
  */
 package com.intel.jndn.utils;
 
+import com.intel.jndn.utils.client.FutureData;
 import com.intel.jndn.utils.client.SegmentedFutureData;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -118,12 +119,16 @@ public class SegmentedClient implements Client {
     final List<Future<Data>> segments = new ArrayList<>();
     segments.add(SimpleClient.getDefault().getAsync(face, interest));
 
-    // retrieve first packet to find last segment value
+    // retrieve first packet and find the FinalBlockId
     long lastSegment;
     try {
       lastSegment = segments.get(0).get().getMetaInfo().getFinalBlockId().toSegment();
-    } catch (ExecutionException | InterruptedException | EncodingException e) {
+    } catch (ExecutionException | InterruptedException e) {
       logger.log(Level.SEVERE, "Failed to retrieve first segment: ", e);
+      ((FutureData) segments.get(0)).reject(e); // TODO implies knowledge of underlying data structure
+      return segments;
+    } catch (EncodingException e) {
+      logger.log(Level.FINER, "No FinalBlockId, returning first packet.");
       return segments;
     }
 
