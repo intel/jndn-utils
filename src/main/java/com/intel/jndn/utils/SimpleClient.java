@@ -78,7 +78,7 @@ public class SimpleClient implements Client {
         }
       });
     } catch (IOException e) {
-      logger.log(Level.WARNING, "IO failure while sending interest: ", e);
+      logger.log(Level.FINE, "IO failure while sending interest: ", e);
       futureData.reject(e);
     }
 
@@ -112,7 +112,7 @@ public class SimpleClient implements Client {
     try {
       return getAsync(face, interest).get();
     } catch (ExecutionException | InterruptedException e) {
-      logger.log(Level.WARNING, "Failed to retrieve data.", e);
+      logger.log(Level.FINE, "Failed to retrieve data.", e);
       throw new IOException("Failed to retrieve data.", e);
     }
   }

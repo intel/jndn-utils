@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.intel.jndn.utils</groupId>
 	<artifactId>jndn-utils</artifactId>
-	<version>0.9.8</version>
+	<version>0.9.9</version>
 	<name>jndn-utils</name>
 	<description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network</description>
 	<url>https://github.com/01org/jndn-utils</url>
