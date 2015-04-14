@@ -39,7 +39,7 @@ import net.named_data.jndn.transport.Transport;
  */
 public class SegmentedServer extends ServerBaseImpl implements RepositoryServer {
 
-  private static final Logger logger = Logger.getLogger(SegmentedClient.class.getName());
+  private static final Logger logger = Logger.getLogger(SegmentedServer.class.getName());
   private final Repository repository = new ForLoopRepository();
 
   /**

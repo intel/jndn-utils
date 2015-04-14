@@ -35,7 +35,7 @@ import net.named_data.jndn.util.Blob;
  */
 public class SimpleServer extends ServerBaseImpl implements DynamicServer {
 
-  private static final Logger logger = Logger.getLogger(SegmentedClient.class.getName());
+  private static final Logger logger = Logger.getLogger(SimpleServer.class.getName());
   private RespondWithData callback;
 
   /**
