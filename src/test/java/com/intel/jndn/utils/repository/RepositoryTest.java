@@ -13,191 +13,71 @@
  */
 package com.intel.jndn.utils.repository;
 
-import com.intel.jndn.utils.repository.Repository;
-import com.intel.jndn.utils.repository.DataNotFoundException;
-import com.intel.jndn.utils.repository.NavigableTreeRepository;
-import com.intel.jndn.utils.repository.ForLoopRepository;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Logger;
+import static com.intel.jndn.utils.repository.RepoHelper.*;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.util.Blob;
-import static org.junit.Assert.*;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Test NDN repositories, including performance
+ * Extend this in descendant tests.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class RepositoryTest {
+public abstract class RepositoryTest {
 
-  private static final Logger logger = Logger.getLogger(RepositoryTest.class.getName());
+  Repository instance;
 
   @Test
-  public void testGenerator() {
-    List<Name> names = buildNames(100);
-    assertEquals(100, names.size());
-    assertNotSame(names.get(0), names.get(1));
-    assertNotSame(names.get(0), names.get(26));
+  public void testGetAndPut() throws DataNotFoundException {
+    instance.put(buildData("/a/b/c"));
+    Data data = instance.get(buildInterest("/a/b/c"));
+    assertEquals("...", data.getContent().toString());
   }
 
-  /**
-   * Some conclusions: the tree is far, far slower to add but far, far faster on
-   * retrieval.
-   *
-   * @throws DataNotFoundException
-   */
   @Test
-  public void testPerformance() throws DataNotFoundException {
-    double seconds = 1000000000.0;
-    List<Name> names = buildNames(1000);
-    List<Data> datas = buildDatas(names);
-    List<Interest> interests = buildInterests(names);
-
-    Repository repo1 = new ForLoopRepository();
-    long time1 = timeAddDatas(repo1, datas);
-    logger.info("Put in for-loop repo (sec): " + time1 / seconds);
-
-    Repository repo2 = new NavigableTreeRepository();
-    long time2 = timeAddDatas(repo2, datas);
-    logger.info("Put in tree repo (sec): " + time2 / seconds);
-
-    long time3 = timeFindDatas(repo1, interests);
-    logger.info("Get from for-loop repo (sec): " + time3 / seconds);
-
-    long time4 = timeFindDatas(repo2, interests);
-    logger.info("Get from tree repo (sec): " + time4 / seconds);
-
-    long time5 = timeFindChildSelectedDatas(repo1, interests);
-    logger.info("Get child-selected from for-loop repo (sec): " + time5 / seconds);
-
-    long time6 = timeFindChildSelectedDatas(repo2, interests);
-    logger.info("Get child-selected from tree repo (sec): " + time6 / seconds);
-  }
-
-  public static void assertChildSelectorsRetrieve(Repository repo) throws DataNotFoundException {
-    repo.put(buildData("/a/b/c"));
-    repo.put(buildData("/a/b/c/e"));
-    repo.put(buildData("/a/b/d"));
+  public void testThatChildSelectorsRetrieve() throws DataNotFoundException {
+    instance.put(buildData("/a/b/c"));
+    instance.put(buildData("/a/b/c/e"));
+    instance.put(buildData("/a/b/d"));
 
     Interest interest = buildInterest("/a/b");
+    interest.setMustBeFresh(false);
     interest.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
-    Data data = repo.get(interest);
+    Data data = instance.get(interest);
     assertEquals("/a/b/d", data.getName().toUri());
 
     Interest interest2 = buildInterest("/a/b/c");
+    interest.setMustBeFresh(false);
     interest2.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
-    Data data2 = repo.get(interest2);
+    Data data2 = instance.get(interest2);
     assertEquals("/a/b/c/e", data2.getName().toUri());
   }
 
-  public static List<Name> buildNames(int size) {
-    List<Name> names = new ArrayList<>();
-    for (Name name : new NameGenerator(size)) {
-      names.add(name);
-    }
-    return names;
+  @Test(expected = DataNotFoundException.class)
+  public void testFailure() throws DataNotFoundException {
+    instance.get(new Interest(new Name("/unknown/data")));
   }
 
-  public static List<Data> buildDatas(List<Name> names) {
-    List<Data> datas = new ArrayList<>();
-    for (Name name : names) {
-      datas.add(buildData(name.toUri()));
-    }
-    return datas;
+  @Test(expected = DataNotFoundException.class)
+  public void testCleanup() throws DataNotFoundException, InterruptedException {
+    instance.put(RepoHelper.buildAlmostStaleData("/stale/data"));
+    instance.put(RepoHelper.buildFreshData("/fresh/data"));
+
+    Thread.sleep(10);
+    instance.cleanup();
+
+    assertNotNull(instance.get(buildInterest("/fresh/data")));
+    instance.get(buildInterest("/stale/data"));
   }
 
-  public static List<Interest> buildInterests(List<Name> names) {
-    List<Interest> interests = new ArrayList<>();
-    for (Name name : names) {
-      interests.add(buildInterest(name.toUri()));
-    }
-    return interests;
+  @Test(expected = DataNotFoundException.class)
+  public void testFreshnessFlag() throws InterruptedException, DataNotFoundException {
+    instance.put(buildAlmostStaleData("/stale/data"));
+    Thread.sleep(10);
+    Interest interest = buildInterest("/stale/data");
+    interest.setMustBeFresh(true);
+    instance.get(interest);
   }
-
-  public static long timeAddDatas(Repository repo, List<Data> datas) {
-    long start = System.nanoTime();
-    for (Data data : datas) {
-      repo.put(data);
-    }
-    return System.nanoTime() - start;
-  }
-
-  public static long timeFindDatas(Repository repo, List<Interest> interests) throws DataNotFoundException {
-    long start = System.nanoTime();
-    for (Interest interest : interests) {
-      Data data = repo.get(interest);
-      assertNotNull(data);
-    }
-    return System.nanoTime() - start;
-  }
-
-  public static long timeFindChildSelectedDatas(Repository repo, List<Interest> interests) throws DataNotFoundException {
-    long start = System.nanoTime();
-    for (Interest interest : interests) {
-      interest.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
-      Data data = repo.get(interest);
-      assertNotNull(data);
-    }
-    return System.nanoTime() - start;
-  }
-
-  public static Data buildData(String name) {
-    Data data = new Data(new Name(name));
-    data.setContent(new Blob("..."));
-    data.getMetaInfo().setFreshnessPeriod(2000);
-    return data;
-  }
-
-  public static Interest buildInterest(String name) {
-    Interest interest = new Interest(new Name(name));
-    interest.setInterestLifetimeMilliseconds(2000);
-    interest.getMustBeFresh();
-    return interest;
-  }
-
-  public static class NameGenerator implements Iterator<Name>, Iterable<Name> {
-
-    private int size;
-    private int count = 0;
-    private Name last = new Name();
-
-    public NameGenerator(int size) {
-      this.size = size;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return count < size;
-    }
-
-    @Override
-    public Name next() {
-      int current = count % 26;
-      String letter = Character.toString((char) (current + 65));
-      if (current == 0) {
-        last.append(letter);
-      } else {
-        last = last.getPrefix(-1).append(letter);
-      }
-      count++;
-      return new Name(last);
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Iterator<Name> iterator() {
-      return this;
-    }
-
-  }
-
 }

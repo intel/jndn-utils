@@ -13,39 +13,14 @@
  */
 package com.intel.jndn.utils.repository;
 
-import com.intel.jndn.utils.repository.Repository;
-import com.intel.jndn.utils.repository.DataNotFoundException;
-import com.intel.jndn.utils.repository.ForLoopRepository;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import org.junit.Test;
-import static org.junit.Assert.*;
-
 /**
  * Test {@link ForLoopRepository}.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class ForLoopRepositoryTest {
+public class ForLoopRepositoryTest extends RepositoryTest {
 
-  @Test
-  public void testGetAndPut() throws DataNotFoundException {
-    Repository repo = new ForLoopRepository();
-    repo.put(RepositoryTest.buildData("/a/b/c"));
-    Data data = repo.get(RepositoryTest.buildInterest("/a/b/c"));
-    assertEquals("...", data.getContent().toString());
-  }
-
-  @Test
-  public void testForLoopChildSelectors() throws DataNotFoundException {
-    Repository repo = new ForLoopRepository();
-    RepositoryTest.assertChildSelectorsRetrieve(repo);
-  }
-
-  @Test(expected = DataNotFoundException.class)
-  public void testFailure() throws DataNotFoundException {
-    Repository repo = new ForLoopRepository();
-    repo.get(new Interest(new Name("/unknown/data")));
+  public ForLoopRepositoryTest() {
+    instance = new ForLoopRepository();
   }
 }

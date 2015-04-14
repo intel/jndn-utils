@@ -29,28 +29,14 @@ import net.named_data.jndn.Name;
  */
 public class ForLoopRepository implements Repository {
 
-  private List<Data> storage = new ArrayList<>();
-
-  /**
-   * Helper data structure
-   */
-  private class Record {
-
-    public Name name;
-    public Data data;
-
-    public Record(Name name, Data data) {
-      this.name = name;
-      this.data = data;
-    }
-  }
+  private List<Record> storage = new ArrayList<>();
 
   /**
    * {@inheritDoc}
    */
   @Override
   public void put(Data data) {
-    storage.add(data);
+    storage.add(new Record(data));
   }
 
   /**
@@ -60,26 +46,19 @@ public class ForLoopRepository implements Repository {
   public Data get(Interest interest) throws DataNotFoundException {
     Name.Component selectedComponent = null;
     Data selectedData = null;
-    for (Data content : storage) {
-      if (interest.matchesName(content.getName())) {
-        if (interest.getChildSelector() < 0) {
-          // No child selector, so send the first match that we have found.
-          return content;
+    for (Record record : storage) {
+      if (interest.matchesName(record.data.getName())) {
+        if (hasNoChildSelector(interest) && hasAcceptableFreshness(interest, record)) {
+          selectedData = record.data;
         } else {
-          // Update selectedEncoding based on the child selector.
-          Name.Component component;
-          if (content.getName().size() > interest.getName().size()) {
-            component = content.getName().get(interest.getName().size());
-          } else {
-            component = new Name.Component();
-          }
+          Name.Component component = getNextComponentAfterLastInterestComponent(record.data, interest);
 
           boolean gotBetterMatch = false;
           if (selectedData == null) {
             // Save the first match.
             gotBetterMatch = true;
           } else {
-            if (interest.getChildSelector() == 0) {
+            if (interest.getChildSelector() == Interest.CHILD_SELECTOR_LEFT) {
               // Leftmost child.
               if (component.compare(selectedComponent) < 0) {
                 gotBetterMatch = true;
@@ -92,9 +71,9 @@ public class ForLoopRepository implements Repository {
             }
           }
 
-          if (gotBetterMatch) {
+          if (gotBetterMatch && hasAcceptableFreshness(interest, record)) {
             selectedComponent = component;
-            selectedData = content;
+            selectedData = record.data;
           }
         }
       }
@@ -105,6 +84,76 @@ public class ForLoopRepository implements Repository {
       return selectedData;
     } else {
       throw new DataNotFoundException();
+    }
+  }
+
+  /**
+   * @param content the content to check (e.g. /a/b/c)
+   * @param interest the interest to check from (e.g. /a/b)
+   * @return the next component from a Data packet after specified Interest
+   * components (e.g. c); if the Data is not longer than the Interest, return an
+   * empty component.
+   */
+  private Name.Component getNextComponentAfterLastInterestComponent(Data content, Interest interest) {
+    if (content.getName().size() > interest.getName().size()) {
+      return content.getName().get(interest.getName().size());
+    } else {
+      return new Name.Component();
+    }
+  }
+
+  private static boolean hasNoChildSelector(Interest interest) {
+    return interest.getChildSelector() < 0;
+  }
+
+  @Override
+  public void cleanup() {
+    for (int i = storage.size() - 1; i >= 0; i--) {
+      if (!isFresh(storage.get(i))) {
+        storage.remove(i);
+      }
+    }
+  }
+
+  /**
+   * Check if a record is fresh.
+   *
+   * @param record the record to check
+   * @return true if the record is fresh
+   */
+  private boolean isFresh(Record record) {
+    double period = record.data.getMetaInfo().getFreshnessPeriod();
+    return period < 0 || record.addedAt + period > System.currentTimeMillis();
+  }
+
+  /**
+   * Based on an Interest's requested freshness, determine if the record has an
+   * acceptable freshness.
+   *
+   * @param interest the Interest, with mustBeFresh set to true/false
+   * @param record the record to check
+   * @return true if the Interest does not require a fresh record or if the
+   * record is fresh
+   */
+  private boolean hasAcceptableFreshness(Interest interest, Record record) {
+    if (!interest.getMustBeFresh()) {
+      return true;
+    } else {
+      return isFresh(record);
+    }
+  }
+
+  /**
+   * Helper data structure
+   */
+  private class Record {
+
+    public final Data data;
+    public final long addedAt;
+
+    public Record(Data data) {
+      this.data = data;
+      this.addedAt = System.currentTimeMillis();
     }
   }
 }

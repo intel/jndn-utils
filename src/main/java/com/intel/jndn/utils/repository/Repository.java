@@ -24,20 +24,25 @@ import net.named_data.jndn.Interest;
  */
 public interface Repository {
 
-	/**
-	 * Put a {@link Data} packet in the repository.
-	 *
-	 * @param data a {@link Data} packet
-	 */
-	public void put(Data data);
+  /**
+   * Put a {@link Data} packet in the repository.
+   *
+   * @param data a {@link Data} packet
+   */
+  public void put(Data data);
 
-	/**
-	 * Retrieve a {@link Data} packet in the repository; this method should
-	 * respect child selectors, exclude selectors, etc.
-	 *
-	 * @param interest the {@link Interest}
-	 * @return a {@link Data} packet
-	 * @throws DataNotFoundException if the packet is not found
-	 */
-	public Data get(Interest interest) throws DataNotFoundException;
+  /**
+   * Retrieve a {@link Data} packet in the repository; this method should
+   * respect child selectors, exclude selectors, etc.
+   *
+   * @param interest the {@link Interest}
+   * @return a {@link Data} packet
+   * @throws DataNotFoundException if the packet is not found
+   */
+  public Data get(Interest interest) throws DataNotFoundException;
+
+  /**
+   * Remove all stale {@link Data} packets from the repository.
+   */
+  public void cleanup();
 }
