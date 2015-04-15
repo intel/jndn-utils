@@ -132,18 +132,18 @@ public class FutureData implements Future<Data> {
           face.processEvents();
         }
       } catch (EncodingException | IOException e) {
-        throw new ExecutionException("Failed to retrieve packet.", e);
+        throw new ExecutionException("Failed to retrieve packet while processing events: " + name.toUri(), e);
       }
     }
 
     // case: cancelled
     if (cancelled) {
-      throw new InterruptedException("Interrupted by user.");
+      throw new InterruptedException("Interrupted by user while retrieving packet: " + name.toUri());
     }
 
     // case: error
     if (error != null) {
-      throw new ExecutionException("Future rejected with error.", error);
+      throw new ExecutionException("Error while retrieving packet: " + name.toUri(), error);
     }
 
     return data;
@@ -171,7 +171,7 @@ public class FutureData implements Future<Data> {
           face.processEvents();
         }
       } catch (EncodingException | IOException e) {
-        throw new ExecutionException("Failed to retrieve packet.", e);
+        throw new ExecutionException("Failed to retrieve packet while processing events: " + name.toUri(), e);
       }
 
       currentTime = System.currentTimeMillis();
@@ -179,17 +179,17 @@ public class FutureData implements Future<Data> {
 
     // case: cancelled
     if (cancelled) {
-      throw new InterruptedException("Interrupted by user.");
+      throw new InterruptedException("Interrupted by user while retrieving packet: " + name.toUri());
     }
 
     // case: error
     if (error != null) {
-      throw new ExecutionException("Future rejected with error.", error);
+      throw new ExecutionException("Error while retrieving packet: " + name.toUri(), error);
     }
 
     // case: timed out
     if (currentTime > endTime) {
-      throw new TimeoutException("Timed out.");
+      throw new TimeoutException("Timed out while retrieving packet: " + name.toUri());
     }
 
     return data;

@@ -14,7 +14,6 @@
 package com.intel.jndn.utils;
 
 import com.intel.jndn.mock.MockFace;
-import com.intel.jndn.mock.MockTransport;
 import com.intel.jndn.utils.client.SegmentedFutureData;
 import java.io.IOException;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.Name.Component;
@@ -42,9 +40,9 @@ public class SegmentedClientTest {
 
   private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
   private MockFace face;
-  
+
   @Before
-  public void beforeTest(){
+  public void beforeTest() {
     face = new MockFace();
   }
 
@@ -140,6 +138,28 @@ public class SegmentedClientTest {
     Future<Data> result = SegmentedClient.getDefault().getAsync(face, name);
     assertEquals("/test/no-content", result.get().getName().toUri());
     assertEquals("", result.get().getContent().toString());
+  }
+
+  /**
+   * Verify that segmented content is the correct length when retrieved by the
+   * client.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testContentLength() throws Exception {
+    Data data1 = new Data(new Name("/test/content-length").appendSegment(0));
+    data1.setContent(new Blob("0123456789"));
+    data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
+    face.addResponse(data1.getName(), data1);
+    
+    Data data2 = new Data(new Name("/test/content-length").appendSegment(1));
+    data2.setContent(new Blob("0123456789"));
+    data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
+    face.addResponse(data2.getName(), data2);
+
+    Future<Data> result = SegmentedClient.getDefault().getAsync(face, new Name("/test/content-length").appendSegment(0));
+    assertEquals(20, result.get().getContent().size());
   }
 
   /**

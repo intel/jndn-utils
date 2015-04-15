@@ -13,7 +13,6 @@
  */
 package com.intel.jndn.utils.repository;
 
-import com.intel.jndn.utils.repository.DataNotFoundException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 

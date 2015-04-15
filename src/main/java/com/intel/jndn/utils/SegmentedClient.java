@@ -124,11 +124,11 @@ public class SegmentedClient implements Client {
     try {
       lastSegment = segments.get(0).get().getMetaInfo().getFinalBlockId().toSegment();
     } catch (ExecutionException | InterruptedException e) {
-      logger.log(Level.FINE, "Failed to retrieve first segment: ", e);
+      logger.log(Level.FINE, "Failed to retrieve first segment: " + interest.toUri(), e);
       ((FutureData) segments.get(0)).reject(e); // TODO implies knowledge of underlying data structure
       return segments;
     } catch (EncodingException e) {
-      logger.log(Level.FINER, "No FinalBlockId, returning first packet.");
+      logger.log(Level.FINER, "No FinalBlockId, returning first packet: " + interest.toUri());
       return segments;
     }
 
@@ -179,8 +179,9 @@ public class SegmentedClient implements Client {
     try {
       return getAsync(face, interest).get();
     } catch (ExecutionException | InterruptedException e) {
-      logger.log(Level.FINE, "Failed to retrieve data.", e);
-      throw new IOException("Failed to retrieve data.", e);
+      String message = "Failed to retrieve data: " + interest.toUri();
+      logger.log(Level.FINE, message, e);
+      throw new IOException(message, e);
     }
   }
 

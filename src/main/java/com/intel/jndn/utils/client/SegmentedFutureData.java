@@ -122,7 +122,7 @@ public class SegmentedFutureData implements Future<Data> {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets.", e);
+        throw new ExecutionException("Failed while aggregating retrieved packets: " + name.toUri(), e);
       }
     }
 
@@ -154,12 +154,12 @@ public class SegmentedFutureData implements Future<Data> {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets.", e);
+        throw new ExecutionException("Failed while aggregating retrieved packets: " + name.toUri(), e);
       }
 
       // check for timeout
       if (System.currentTimeMillis() > endTime) {
-        throw new TimeoutException("Timed out.");
+        throw new TimeoutException("Timed out while retrieving packets: " + name.toUri());
       }
     }
 
