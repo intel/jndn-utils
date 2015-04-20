@@ -89,6 +89,7 @@ public abstract class ServerBaseImpl implements Server {
           logger.log(Level.SEVERE, "Failed to register prefix: " + prefix.toUri());
         }
       }, new ForwardingFlags());
+      logger.log(Level.FINER, "Registered a new prefix: " + prefix.toUri());      
     } catch (net.named_data.jndn.security.SecurityException e) {
       throw new IOException("Failed to communicate to face due to security error", e);
     }

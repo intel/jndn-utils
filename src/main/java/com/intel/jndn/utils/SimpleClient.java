@@ -65,6 +65,7 @@ public class SimpleClient implements Client {
     final FutureData futureData = new FutureData(face, interest.getName());
 
     // send interest
+    logger.log(Level.FINER, "Sending interest for: " + interest.getName().toUri());
     try {
       face.expressInterest(interest, new OnData() {
         @Override
