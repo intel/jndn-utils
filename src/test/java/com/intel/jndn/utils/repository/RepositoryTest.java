@@ -54,6 +54,16 @@ public abstract class RepositoryTest {
     Data data2 = instance.get(interest2);
     assertEquals("/a/b/c/e", data2.getName().toUri());
   }
+  
+  @Test
+  public void testChildSelectorsOnExactMatch() throws DataNotFoundException{
+    instance.put(buildData("/a/b/c"));
+    instance.put(buildData("/a/b/d"));
+    
+    Interest interest = buildInterest("/a/b/c").setChildSelector(Interest.CHILD_SELECTOR_LEFT);
+    assertTrue(instance.satisfies(interest));
+    assertEquals("/a/b/c", instance.get(interest).getName().toUri());
+  }
 
   @Test(expected = DataNotFoundException.class)
   public void testFailure() throws DataNotFoundException {
@@ -79,5 +89,32 @@ public abstract class RepositoryTest {
     Interest interest = buildInterest("/stale/data");
     interest.setMustBeFresh(true);
     instance.get(interest);
+  }
+
+  @Test
+  public void testSatisfies() throws InterruptedException {
+    instance.put(RepoHelper.buildAlmostStaleData("/stale/data"));
+    instance.put(RepoHelper.buildFreshData("/fresh/data"));
+
+    Thread.sleep(10);
+
+    assertTrue(instance.satisfies(buildInterest("/fresh/data")));
+    assertFalse(instance.satisfies(buildInterest("/stale/data")));
+    assertFalse(instance.satisfies(buildInterest("/not/found/data")));
+  }
+
+  @Test
+  public void testChildSelectors() throws DataNotFoundException {
+    instance.put(RepoHelper.buildFreshData("/a/a"));
+    instance.put(RepoHelper.buildFreshData("/a/b/c/1"));
+    instance.put(RepoHelper.buildFreshData("/a/b/c/2"));
+    instance.put(RepoHelper.buildFreshData("/a/b/c/3"));
+    
+    assertTrue(instance.satisfies(buildInterest("/a")));
+    
+    Data out = instance.get(buildInterest("/a").setChildSelector(Interest.CHILD_SELECTOR_RIGHT));
+    assertEquals("/a/b/c/1", out.getName().toUri());
+    // you may think this should be /a/b/c/3, but the child selectors only
+    // operate on the first component after the interest name; in this case, "b"
   }
 }

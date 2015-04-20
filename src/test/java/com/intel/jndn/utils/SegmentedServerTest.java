@@ -16,6 +16,7 @@ package com.intel.jndn.utils;
 import com.intel.jndn.mock.MockFace;
 import java.io.IOException;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 import static org.junit.Assert.*;
@@ -56,5 +57,41 @@ public class SegmentedServerTest {
     assertEquals(in.getContent(), out.getContent());
     assertEquals(in.getName().toUri(), out.getName().toUri());
     assertEquals("1234", out.getContent().toString());
+  }
+  
+  @Test(expected = IOException.class)
+  public void testCleanup() throws Exception{
+    Data in = new Data(new Name("/test"));
+    in.getMetaInfo().setFreshnessPeriod(0);
+    instance.serve(in);
+    Thread.sleep(10);
+    
+    Data out = SegmentedClient.getDefault().getSync(face, new Name("/test"));
+    assertNotNull(out);
+    assertEquals(in.getName(), out.getName());
+    
+    instance.cleanup();
+    SegmentedClient.getDefault().getSync(face, new Name("/test"));
+  }
+  
+  @Test
+  public void testServingNoContent() throws IOException{
+    instance.serve(new Data());
+  }
+  
+  @Test
+  public void testWhenDataNameIsLongerThanInterestName() throws Exception{
+    instance.serve(new Data(new Name("/test/prefix/a/b/c/1")));
+    instance.serve(new Data(new Name("/test/prefix/a/b/c/2")));
+    
+    Interest interest = new Interest(new Name("/test/prefix/a/b"))
+            .setChildSelector(Interest.CHILD_SELECTOR_RIGHT).setInterestLifetimeMilliseconds(100);
+    Data out = SegmentedClient.getDefault().getSync(face, interest);
+    
+    assertNotNull(out);
+    assertEquals("/test/prefix/a/b/c/1", out.getName().toUri());
+    // note that this won't be .../c/2 since .../c/1 satisfies both the Interest
+    // name and "c" is the rightmost component (child selectors operate on the
+    // next component after the Interest name only)
   }
 }

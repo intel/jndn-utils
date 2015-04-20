@@ -27,12 +27,15 @@ import net.named_data.jndn.Data;
 public interface RepositoryServer extends Server {
 
   /**
-   * Store a {@link Data} packet in the server's repository until requested. The
-   * task of removing (or retaining) stale packets is not specified here but
-   * left to the implementation.
+   * Store a {@link Data} packet in the server's repository until requested.
    *
    * @param data the {@link Data} packet to store and serve
    * @throws IOException if the underlying server fails to store the packet
    */
   public void serve(Data data) throws IOException;
+  
+  /**
+   * Clean up stale {@link Data} packets from the underlying content store.
+   */
+  public void cleanup();
 }

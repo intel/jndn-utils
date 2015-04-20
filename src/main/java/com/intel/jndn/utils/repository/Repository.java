@@ -41,6 +41,16 @@ public interface Repository {
   public Data get(Interest interest) throws DataNotFoundException;
 
   /**
+   * Check if this repository can satisfy the {@link Interest} with a
+   * {@link Data} packet; this should check not only name matching but freshness
+   * and any other selectors.
+   *
+   * @param interest the {@link Interest} to attempt to satisfy
+   * @return true if a {@link Data} exists that satisfies the {@link Interest}
+   */
+  public boolean satisfies(Interest interest);
+
+  /**
    * Remove all stale {@link Data} packets from the repository.
    */
   public void cleanup();

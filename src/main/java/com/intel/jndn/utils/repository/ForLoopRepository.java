@@ -50,6 +50,7 @@ public class ForLoopRepository implements Repository {
       if (interest.matchesName(record.data.getName())) {
         if (hasNoChildSelector(interest) && hasAcceptableFreshness(interest, record)) {
           selectedData = record.data;
+          break;
         } else {
           Name.Component component = getNextComponentAfterLastInterestComponent(record.data, interest);
 
@@ -102,17 +103,12 @@ public class ForLoopRepository implements Repository {
     }
   }
 
+  /**
+   * @param interest the {@link Interest} to check
+   * @return true if the {@link Interest} has no child selector
+   */
   private static boolean hasNoChildSelector(Interest interest) {
     return interest.getChildSelector() < 0;
-  }
-
-  @Override
-  public void cleanup() {
-    for (int i = storage.size() - 1; i >= 0; i--) {
-      if (!isFresh(storage.get(i))) {
-        storage.remove(i);
-      }
-    }
   }
 
   /**
@@ -140,6 +136,33 @@ public class ForLoopRepository implements Repository {
       return true;
     } else {
       return isFresh(record);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean satisfies(Interest interest) {
+    for (Record record : storage) {
+      if (interest.matchesName(record.data.getName()) && hasAcceptableFreshness(interest, record)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cleanup() {
+    for (int i = storage.size() - 1; i >= 0; i--) {
+      if (!isFresh(storage.get(i))) {
+        synchronized (storage) {
+          storage.remove(i);
+        }
+      }
     }
   }
 

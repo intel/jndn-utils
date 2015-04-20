@@ -58,11 +58,16 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
       register();
     }
 
-    InputStream stream = new ByteArrayInputStream(data.getContent().getImmutableArray());
-    List<Data> segments = SegmentedServerHelper.segment(data, stream);
-    for (Data segment : segments) {
-      logger.info("Added segment: " + segment.getName().toUri());
-      repository.put(segment);
+    if (data.getContent().size() >= SegmentedServerHelper.DEFAULT_SEGMENT_SIZE) {
+      InputStream stream = new ByteArrayInputStream(data.getContent().getImmutableArray());
+      List<Data> segments = SegmentedServerHelper.segment(data, stream);
+      for (Data segment : segments) {
+        logger.fine("Adding segment: " + segment.getName().toUri());
+        repository.put(segment);
+      }
+    } else {
+      logger.fine("Adding segment: " + data.getName().toUri());
+      repository.put(data);
     }
   }
 
@@ -71,6 +76,8 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
    */
   @Override
   public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+    logger.finer("Serving packet for: " + interest.toUri());
+    
     if (interest.getChildSelector() == -1) {
       try {
         interest.getName().get(-1).toSegment();
@@ -85,7 +92,15 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
       ByteBuffer buffer = data.wireEncode().buf();
       transport.send(buffer);
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Failed to send data for: " + interest.toUri(), e);
+      logger.log(Level.SEVERE, "Failed to find data satisfying: " + interest.toUri(), e);
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cleanup() {
+    repository.cleanup();
   }
 }
