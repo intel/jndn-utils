@@ -16,6 +16,7 @@ package com.intel.jndn.utils;
 import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.utils.client.SegmentedFutureData;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -105,22 +106,43 @@ public class SegmentedClientTest {
   }
 
   /**
-   * Ensure Name of the returned Data is the same as was requested; identifies
-   * bug where the last Name.Component was always cut off.
+   * Identifies bug where the last Name.Component was always cut off.
    *
    * @throws InterruptedException
    * @throws ExecutionException
    */
   @Test
   public void testNameShorteningLogic() throws InterruptedException, ExecutionException {
-    Name name = new Name("/test/123").appendSegment(15);
-    Data data = buildSegmentedData(name);
-    data.setContent(new Blob("...."));
-    face.addResponse(name, data);
+    final List<Data> segments = buildSegmentedData("/test/name", 10);
+    for (Data segment : segments) {
+      face.addResponse(segment.getName(), segment);
+    }
+
+    Name name = new Name("/test/name").appendSegment(0);
 
     SegmentedFutureData future = (SegmentedFutureData) SegmentedClient.getDefault().getAsync(face, name);
-    assertEquals(name.getPrefix(-1).toUri(), future.getName().toUri());
     assertEquals(name.getPrefix(-1).toUri(), future.get().getName().toUri());
+  }
+
+  /**
+   * Verify that Data returned with a different Name than the Interest is still
+   * segmented correctly.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testWhenDataNameIsLongerThanInterestName() throws Exception {
+    final List<Data> segments = buildSegmentedData("/a/b/c/d", 10);
+    for (Data segment : segments) {
+      face.addResponse(segment.getName(), segment);
+    }
+
+    Name name = new Name("/a/b");
+    face.addResponse(name, segments.get(0));
+
+    Data data = SegmentedClient.getDefault().getSync(face, name);
+    assertNotNull(data);
+    assertEquals("/a/b/c/d", data.getName().toUri());
   }
 
   /**
@@ -152,7 +174,7 @@ public class SegmentedClientTest {
     data1.setContent(new Blob("0123456789"));
     data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
     face.addResponse(data1.getName(), data1);
-    
+
     Data data2 = new Data(new Name("/test/content-length").appendSegment(1));
     data2.setContent(new Blob("0123456789"));
     data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
@@ -190,6 +212,20 @@ public class SegmentedClientTest {
     Data data = new Data(name);
     data.getMetaInfo().setFinalBlockId(name.get(-1));
     return data;
+  }
+
+  private List<Data> buildSegmentedData(String name, int numSegments) {
+    Name.Component finalBlockId = Name.Component.fromNumberWithMarker(numSegments - 1, 0x00);
+    List<Data> segments = new ArrayList<>(numSegments);
+
+    for (int i = 0; i < numSegments; i++) {
+      Data data = new Data(new Name(name).appendSegment(i));
+      data.setContent(new Blob("0123456789"));
+      data.getMetaInfo().setFinalBlockId(finalBlockId);
+      segments.add(data);
+    }
+
+    return segments;
   }
 
 }

@@ -71,8 +71,7 @@ public class SegmentedClient implements Client {
   @Override
   public Future<Data> getAsync(Face face, Interest interest) {
     List<Future<Data>> segments = getAsyncList(face, interest);
-    Name name = hasSegment(interest.getName()) ? interest.getName().getPrefix(-1) : interest.getName();
-    return new SegmentedFutureData(name, segments);
+    return new SegmentedFutureData(interest.getName(), segments);
   }
 
   /**
@@ -103,10 +102,8 @@ public class SegmentedClient implements Client {
   public List<Future<Data>> getAsyncList(Face face, Interest interest) {
     // get first segment; default 0 or use a specified start segment
     long firstSegment = 0;
-    boolean specifiedSegment = false;
     try {
       firstSegment = interest.getName().get(-1).toSegment();
-      specifiedSegment = true;
     } catch (EncodingException e) {
       // check for interest selector if no initial segment found
       if (interest.getChildSelector() == -1) {
@@ -120,9 +117,11 @@ public class SegmentedClient implements Client {
     segments.add(SimpleClient.getDefault().getAsync(face, interest));
 
     // retrieve first packet and find the FinalBlockId
+    Data firstData;
     long lastSegment;
     try {
-      lastSegment = segments.get(0).get().getMetaInfo().getFinalBlockId().toSegment();
+      firstData = segments.get(0).get();
+      lastSegment = firstData.getMetaInfo().getFinalBlockId().toSegment();
     } catch (ExecutionException | InterruptedException e) {
       logger.log(Level.FINE, "Failed to retrieve first segment: " + interest.toUri(), e);
       ((FutureData) segments.get(0)).reject(e); // TODO implies knowledge of underlying data structure
@@ -132,14 +131,18 @@ public class SegmentedClient implements Client {
       return segments;
     }
 
-    // cut interest segment off
-    if (specifiedSegment) {
-      interest.setName(interest.getName().getPrefix(-1));
+    // set follow-on segment names to match first segment retrieve
+    Interest interestCopy = new Interest(interest);
+    if (hasSegment(firstData.getName())) {
+      interestCopy.setName(firstData.getName().getPrefix(-1)); // cut last segment number if present
+    } else {
+      logger.log(Level.FINER, "First packet retrieved does not have a segment number, continuing on: " + firstData.getName().toUri());
+      interestCopy.setName(firstData.getName());
     }
 
     // send interests in remaining segments
     for (long i = firstSegment + 1; i <= lastSegment; i++) {
-      Interest segmentedInterest = new Interest(interest);
+      Interest segmentedInterest = new Interest(interestCopy);
       segmentedInterest.getName().appendSegment(i);
       Future<Data> futureData = SimpleClient.getDefault().getAsync(face, segmentedInterest);
       segments.add((int) i, futureData);

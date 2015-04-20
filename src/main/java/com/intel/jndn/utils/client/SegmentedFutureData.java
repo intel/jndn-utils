@@ -13,6 +13,7 @@
  */
 package com.intel.jndn.utils.client;
 
+import com.intel.jndn.utils.SegmentedClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -37,32 +38,21 @@ import net.named_data.jndn.util.Blob;
  */
 public class SegmentedFutureData implements Future<Data> {
 
-  private final Name name;
+  private final Name interestName;
   List<Future<Data>> segments;
   private boolean cancelled = false;
 
   /**
    * Constructor
    *
-   * @param name this will be the name of the returned Data packet, regardless
-   * of suffixes (e.g. segment components) on each segment packet
-   * @param segments
+   * @param interestName the {@link Name} of the original interest, for debugging purposes
+   * @param segments the list of future segments to retrieve
    */
-  public SegmentedFutureData(Name name, List<Future<Data>> segments) {
-    this.name = name;
+  public SegmentedFutureData(Name interestName, List<Future<Data>> segments) {
+    this.interestName = interestName;
     this.segments = segments;
   }
-
-  /**
-   * Get the Interest name; this will also be the name of the Data packet
-   * returned from get().
-   *
-   * @return
-   */
-  public Name getName() {
-    return name;
-  }
-
+  
   /**
    * Cancel the current request.
    *
@@ -122,13 +112,14 @@ public class SegmentedFutureData implements Future<Data> {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets: " + name.toUri(), e);
+        throw new ExecutionException("Failed while aggregating retrieved packets: " + interestName.toUri(), e);
       }
     }
 
     // build aggregated packet (copy first packet)
-    Data data = new Data(segments.get(0).get());
-    data.setName(getName());
+    Data firstData = segments.get(0).get();
+    Data data = new Data(firstData);
+    data.setName(getNameFromFirstData(firstData));
     data.setContent(new Blob(content.toByteArray()));
     return data;
   }
@@ -154,19 +145,28 @@ public class SegmentedFutureData implements Future<Data> {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets: " + name.toUri(), e);
+        throw new ExecutionException("Failed while aggregating retrieved packets: " + interestName.toUri(), e);
       }
 
       // check for timeout
       if (System.currentTimeMillis() > endTime) {
-        throw new TimeoutException("Timed out while retrieving packets: " + name.toUri());
+        throw new TimeoutException("Timed out while retrieving packets: " + interestName.toUri());
       }
     }
-
+    
     // build aggregated packet (copy first packet)
-    Data data = new Data(segments.get(0).get());
-    data.setName(getName());
+    Data firstData = segments.get(0).get();
+    Data data = new Data(firstData);
+    data.setName(getNameFromFirstData(firstData));
     data.setContent(new Blob(content.toByteArray()));
     return data;
+  }
+  
+  private Name getNameFromFirstData(Data firstPacket) throws InterruptedException, ExecutionException{
+    Name firstPacketName = segments.get(0).get().getName();
+    if(SegmentedClient.hasSegment(firstPacketName)){
+      firstPacketName = firstPacketName.getPrefix(-1);
+    }
+    return firstPacketName;
   }
 }
