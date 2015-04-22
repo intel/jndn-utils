@@ -50,7 +50,6 @@ public class ForLoopRepository implements Repository {
       if (interest.matchesName(record.data.getName())) {
         if (hasNoChildSelector(interest) && hasAcceptableFreshness(interest, record)) {
           selectedData = record.data;
-          break;
         } else {
           Name.Component component = getNextComponentAfterLastInterestComponent(record.data, interest);
 
@@ -119,7 +118,7 @@ public class ForLoopRepository implements Repository {
    */
   private boolean isFresh(Record record) {
     double period = record.data.getMetaInfo().getFreshnessPeriod();
-    return period < 0 || record.addedAt + period > System.currentTimeMillis();
+    return period < 0 || record.addedAt + (long) period > System.currentTimeMillis();
   }
 
   /**

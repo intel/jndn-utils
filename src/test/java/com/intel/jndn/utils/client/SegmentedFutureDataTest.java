@@ -69,8 +69,16 @@ public class SegmentedFutureDataTest {
   /**
    * Test of get method, of class FutureData.
    */
-  @Test
+  @Test(expected = TimeoutException.class)
   public void testGet_long_TimeUnit() throws Exception {
-    instance.get(10, TimeUnit.MILLISECONDS);
+    Face face = new MockFace();
+    Data data = new Data(new Name("/test/packet").appendSegment(0));
+    FutureData future = new FutureData(face, data.getName());
+    
+    List<Future<Data>> segments = new ArrayList<>();
+    segments.add(future);
+    SegmentedFutureData segmentedFuture = new SegmentedFutureData(new Name("/test/packet"), segments);
+    
+    segmentedFuture.get(10, TimeUnit.MILLISECONDS);
   }
 }

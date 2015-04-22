@@ -143,7 +143,7 @@ public class SegmentedFutureData implements Future<Data> {
     ByteArrayOutputStream content = new ByteArrayOutputStream();
     for (Future<Data> futureData : segments) {
       try {
-        content.write(futureData.get().getContent().getImmutableArray());
+        content.write(futureData.get(timeout, unit).getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
         throw new ExecutionException("Failed while aggregating retrieved packets: " + interestName.toUri(), e);
       }

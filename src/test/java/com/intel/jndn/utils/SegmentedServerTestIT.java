@@ -15,10 +15,10 @@ package com.intel.jndn.utils;
 
 import com.intel.jndn.mock.MockKeyChain;
 import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
@@ -52,22 +52,19 @@ public class SegmentedServerTestIT {
 
   @Test
   public void testRegisterAndRetrieval() throws Exception {
-    final Name name = new Name(prefix).append("1");
+    final Name name1 = new Name(prefix).append("1");
+    final Name name2 = new Name(prefix).append("2");
 
     // why a new thread? The server will only operate if someone turns the crank,
     // i.e. someone calls face.processEvents() every so often. 
     new Thread(new Runnable() {
       @Override
       public void run() {
-        Data served = new Data(name);
-        served.setContent(new Blob("..."));
-        served.getMetaInfo().setFreshnessPeriod(30000);
-
         try {
-          instance.serve(served);
-          logger.info("Serving data: " + name.toUri());
+          instance.serve(buildDataPacket(name1));
+          instance.serve(buildDataPacket(name2));
         } catch (IOException ex) {
-          logger.info("Failed to serve data: " + name.toUri());
+          logger.info("Failed to serve data.");
         }
 
         while (true) {
@@ -86,9 +83,22 @@ public class SegmentedServerTestIT {
 
     // why a different face? because we don't want the abover face.processEvents()
     // to interfere with the SimpleClient's processEvents().
-    logger.info("Retrieving data: " + name.toUri());
-    Data retrieved = SegmentedClient.getDefault().getSync(new Face(ip), name);
+    logger.info("Retrieving data: " + prefix.toUri());
+    Interest interest = new Interest(new Name(prefix));
+    interest.setInterestLifetimeMilliseconds(2000);
+    interest.setMustBeFresh(true);
+    interest.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
+    
+    Data retrieved = SegmentedClient.getDefault().getSync(new Face(ip), interest);
     assertNotNull(retrieved);
     assertEquals("...", retrieved.getContent().toString());
+    logger.info("Retrieved data: " + retrieved.getName().toUri());
+  }
+
+  Data buildDataPacket(Name name) {
+    Data data = new Data(new Name(name).appendSegment(0));
+    data.setContent(new Blob("..."));
+    data.getMetaInfo().setFreshnessPeriod(30000);
+    return data;
   }
 }
