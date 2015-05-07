@@ -114,8 +114,8 @@ public class SimpleClientTest {
   @Test(expected = ExecutionException.class)
   public void testAsyncFailureToRetrieve() throws InterruptedException, ExecutionException {
     Future future = SimpleClient.getDefault().getAsync(new Face(), new Name("/test/no-data"));
-    assertTrue(future.isDone());
     future.get();
+    assertTrue(future.isDone());
   }
 
   /**
