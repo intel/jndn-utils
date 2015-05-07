@@ -19,8 +19,8 @@ import java.util.concurrent.Executors;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.transport.Transport;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -41,7 +41,7 @@ public class ServerBaseImplTest {
     }
 
     @Override
-    public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+    public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
   }

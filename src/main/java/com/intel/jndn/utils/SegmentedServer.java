@@ -20,16 +20,15 @@ import com.intel.jndn.utils.server.ServerBaseImpl;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.transport.Transport;
 
 /**
  * Implementation of a {@link RepositoryServer} that segments packets stored in
@@ -75,7 +74,7 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
    * {@inheritDoc}
    */
   @Override
-  public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+  public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
     logger.finer("Serving packet for: " + interest.toUri());
     
     if (interest.getChildSelector() == -1) {
@@ -89,10 +88,9 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
     try {
       Data data = repository.get(interest);
       data = processPipeline(data);
-      ByteBuffer buffer = data.wireEncode().buf();
-      transport.send(buffer);
+      face.putData(data);
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Failed to find data satisfying: " + interest.toUri(), e);
+      logger.log(Level.FINE, "Failed to find data satisfying: " + interest.toUri(), e);
     }
   }
 

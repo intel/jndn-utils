@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
@@ -83,14 +84,13 @@ public class SimpleServer extends ServerBaseImpl implements DynamicServer {
    * {@inheritDoc}
    */
   @Override
-  public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+  public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter){
     try {
       Data data = callback.onInterest(prefix, interest);
       data = processPipeline(data);
-      ByteBuffer buffer = data.wireEncode().buf();
-      transport.send(buffer);
+      face.putData(data);
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Failed to send data for: " + interest.toUri(), e);
+      logger.log(Level.FINE, "Failed to send data for: " + interest.toUri(), e);
     }
   }
 }

@@ -15,8 +15,9 @@ package com.intel.jndn.utils.server;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.OnInterest;
+import net.named_data.jndn.OnInterestCallback;
 
 /**
  * Base interface for defining a server; see descendant interfaces for different
@@ -27,7 +28,7 @@ import net.named_data.jndn.OnInterest;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public interface Server extends Runnable, OnInterest {
+public interface Server extends Runnable, OnInterestCallback {
 
   /**
    * @return the {@link Name} prefix this server is serving on.
