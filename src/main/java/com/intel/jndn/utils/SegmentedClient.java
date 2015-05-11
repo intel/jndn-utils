@@ -83,16 +83,18 @@ public class SegmentedClient implements Client {
       face.expressInterest(interest, new OnData() {
         @Override
         public void onData(Interest interest, Data data) {
-          firstData.resolve(data);
-          // now request subsequent segments using FinalBlockId and the Interest template
+          // request subsequent segments using FinalBlockId and the Interest template
           try {
             long lastSegmentId = parseLastSegmentId(data);
             Interest template = new Interest(interest);
             template.setName(removeSegment(data.getName()));
             requestRemainingSegments(face, segmentedData, template, firstSegmentId + 1, lastSegmentId);
           } catch (EncodingException ex) {
-            Logger.getLogger(SegmentedClient.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.FINER, "No segment ID found in FinalBlockId, assuming first packet is only packet.");
           }
+          
+          // resolve the first data
+          firstData.resolve(data);
         }
       }, new OnTimeout() {
         @Override
