@@ -13,15 +13,10 @@
  */
 package com.intel.jndn.utils.client;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.OnData;
 
 /**
  * Reference to a Packet that has yet to be returned from the network. Usage:
@@ -38,160 +33,51 @@ import net.named_data.jndn.encoding.EncodingException;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class FutureData implements Future<Data> {
+public class FutureData extends FutureDataBase {
 
-  protected final Face face;
-  private final Name name;
   private Data data;
-  private boolean cancelled = false;
-  private Throwable error;
 
   /**
    * Constructor
    *
-   * @param face
-   * @param name
+   * @param face the {@link Face} to use for processing events
+   * @param name the {@link Name} of the interest sent
    */
   public FutureData(Face face, Name name) {
-    this.face = face;
-    this.name = new Name(name);
+    super(face, name);
   }
 
   /**
-   * Get the Interest name.
-   *
-   * @return
-   */
-  public Name getName() {
-    return name;
-  }
-
-  /**
-   * Cancel the current request.
-   *
-   * @param mayInterruptIfRunning
-   * @return
-   */
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    cancelled = true;
-    return cancelled;
-  }
-
-  /**
-   * Determine if this request is cancelled.
-   *
-   * @return
-   */
-  @Override
-  public boolean isCancelled() {
-    return cancelled;
-  }
-
-  /**
-   * Determine if the request has completed (successfully or not).
-   *
-   * @return
+   * @return true if the request has completed (successfully or not)
    */
   @Override
   public boolean isDone() {
-    return data != null || error != null || isCancelled();
+    return isResolved() || isRejected() || isCancelled();
   }
 
   /**
-   * Set the packet when successfully retrieved; unblocks get().
+   * Set the packet when successfully retrieved; unblocks {@link #get()}. Use
+   * this method inside an {@link OnData} callback to resolve this future.
    *
-   * @param d
+   * @param returnedData the {@link Data} returned from the network
    */
-  public void resolve(Data d) {
-    data = d;
+  public void resolve(Data returnedData) {
+    data = returnedData;
   }
 
   /**
-   * Set the exception when request failed; unblocks get().
-   *
-   * @param e
+   * @return true if the {@link Data} has returned and been resolved with
+   * {@link #resolve(net.named_data.jndn.Data)}.
    */
-  public void reject(Throwable e) {
-    error = e;
+  public boolean isResolved() {
+    return data != null;
   }
 
   /**
-   * Block until packet is retrieved.
-   *
-   * @return
-   * @throws InterruptedException
-   * @throws ExecutionException
+   * {@inheritDoc}
    */
   @Override
-  public Data get() throws InterruptedException, ExecutionException {
-    while (!isDone()) {
-      // process face events
-      try {
-        synchronized (face) {
-          face.processEvents();
-        }
-      } catch (EncodingException | IOException e) {
-        throw new ExecutionException("Failed to retrieve packet while processing events: " + name.toUri(), e);
-      }
-    }
-
-    // case: cancelled
-    if (cancelled) {
-      throw new InterruptedException("Interrupted by user while retrieving packet: " + name.toUri());
-    }
-
-    // case: error
-    if (error != null) {
-      throw new ExecutionException("Error while retrieving packet: " + name.toUri(), error);
-    }
-
-    return data;
-  }
-
-  /**
-   * Block until packet is retrieved or timeout is reached.
-   *
-   * @param timeout
-   * @param unit
-   * @return
-   * @throws InterruptedException
-   * @throws ExecutionException
-   * @throws TimeoutException
-   */
-  @Override
-  public Data get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    long interval = TimeUnit.MILLISECONDS.convert(timeout, unit);
-    long endTime = System.currentTimeMillis() + interval;
-    long currentTime = System.currentTimeMillis();
-    while (!isDone() && !isCancelled() && currentTime <= endTime) {
-      // process face events
-      try {
-        synchronized (face) {
-          face.processEvents();
-        }
-      } catch (EncodingException | IOException e) {
-        throw new ExecutionException("Failed to retrieve packet while processing events: " + name.toUri(), e);
-      }
-
-      currentTime = System.currentTimeMillis();
-    }
-
-    // case: cancelled
-    if (cancelled) {
-      throw new InterruptedException("Interrupted by user while retrieving packet: " + name.toUri());
-    }
-
-    // case: error
-    if (error != null) {
-      throw new ExecutionException("Error while retrieving packet: " + name.toUri(), error);
-    }
-
-    // case: timed out
-    if (currentTime > endTime) {
-      throw new TimeoutException("Timed out while retrieving packet: " + name.toUri());
-    }
-
+  public Data getData() {
     return data;
   }
 }

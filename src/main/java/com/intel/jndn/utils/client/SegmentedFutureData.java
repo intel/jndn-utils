@@ -16,17 +16,17 @@ package com.intel.jndn.utils.client;
 import com.intel.jndn.utils.SegmentedClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 
 /**
- * Represents a list of Packets that have been requested asynchronously and have
+ * Represents a list of packets that have been requested asynchronously and have
  * yet to be returned from the network. Usage:
  *
  * <pre><code>
@@ -36,135 +36,106 @@ import net.named_data.jndn.util.Blob;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class SegmentedFutureData implements Future<Data> {
+public class SegmentedFutureData extends FutureDataBase {
 
-  private final Name interestName;
-  List<Future<Data>> segments;
-  private boolean cancelled = false;
+  List<Future<Data>> segments = new ArrayList<>();
 
-  /**
-   * Constructor
-   *
-   * @param interestName the {@link Name} of the original interest, for debugging purposes
-   * @param segments the list of future segments to retrieve
-   */
-  public SegmentedFutureData(Name interestName, List<Future<Data>> segments) {
-    this.interestName = interestName;
-    this.segments = segments;
-  }
-  
-  /**
-   * Cancel the current request.
-   *
-   * @param mayInterruptIfRunning
-   * @return
-   */
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    cancelled = true;
-    return cancelled;
+  public SegmentedFutureData(Face face, Name name) {
+    super(face, name);
   }
 
   /**
-   * Determine if this request is cancelled.
+   * Add a future data to the list of segments
    *
-   * @return
+   * @param index the numeric index in the list, see
+   * {@link List#add(int, java.lang.Object)} for more details.
+   * @param futureData the {@link Future} to add
    */
-  @Override
-  public boolean isCancelled() {
-    return cancelled;
+  public void add(int index, Future<Data> futureData) {
+    segments.add(index, futureData);
   }
 
   /**
-   * Determine if the request has completed (successfully or not).
+   * Add a future data to the end of the list of segments
    *
-   * @return
+   * @param futureData the {@link Future} to add
+   */
+  public void add(FutureData futureData) {
+    segments.add(futureData);
+  }
+
+  /**
+   * @return true if the request has completed (successfully or not)
    */
   @Override
   public boolean isDone() {
-    // check for errors, cancellation
-    if (isCancelled()) {
-      return true;
-    }
-
-    // check each segment for completion
+    return isRejected() || isCancelled() || allSegmentsDone();
+  }
+  
+  /**
+   * @return true if all segments are done
+   */
+  private boolean allSegmentsDone(){
     for (Future<Data> futureData : segments) {
       if (!futureData.isDone()) {
         return false;
       }
     }
-
     return true;
   }
 
   /**
-   * Block until packet is retrieved.
-   *
-   * @return
-   * @throws InterruptedException
-   * @throws ExecutionException
+   * {@inheritDoc}
    */
   @Override
-  public Data get() throws InterruptedException, ExecutionException {
+  public Data getData() throws ExecutionException, InterruptedException {
+    byte[] content = aggregateBytes();
+    Data data = buildAggregatePacket();
+    data.setContent(new Blob(content));
+    return data;
+  }
+  
+  /**
+   * @return the array of aggregated bytes for all of the segments retrieved
+   * @throws ExecutionException
+   */
+  private byte[] aggregateBytes() throws ExecutionException {
     // aggregate bytes
     ByteArrayOutputStream content = new ByteArrayOutputStream();
     for (Future<Data> futureData : segments) {
       try {
         content.write(futureData.get().getContent().getImmutableArray());
       } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets: " + interestName.toUri(), e);
+        throw new ExecutionException("Failed while aggregating retrieved packets: " + getName().toUri(), e);
       }
     }
-
-    // build aggregated packet (copy first packet)
-    Data firstData = segments.get(0).get();
-    Data data = new Data(firstData);
-    data.setName(getNameFromFirstData(firstData));
-    data.setContent(new Blob(content.toByteArray()));
-    return data;
+    return content.toByteArray();
   }
 
   /**
-   * Block until packet is retrieved or timeout is reached.
-   *
-   * @param timeout
-   * @param unit
-   * @return
+   * @return an aggregated {@link Data} packet with no content set
    * @throws InterruptedException
    * @throws ExecutionException
-   * @throws TimeoutException
    */
-  @Override
-  public Data get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    long interval = TimeUnit.MILLISECONDS.convert(timeout, unit);
-    long endTime = System.currentTimeMillis() + interval;
-
-    // aggregate bytes
-    ByteArrayOutputStream content = new ByteArrayOutputStream();
-    for (Future<Data> futureData : segments) {
-      try {
-        content.write(futureData.get(timeout, unit).getContent().getImmutableArray());
-      } catch (ExecutionException | IOException | InterruptedException e) {
-        throw new ExecutionException("Failed while aggregating retrieved packets: " + interestName.toUri(), e);
-      }
-
-      // check for timeout
-      if (System.currentTimeMillis() > endTime) {
-        throw new TimeoutException("Timed out while retrieving packets: " + interestName.toUri());
-      }
+  private Data buildAggregatePacket() throws InterruptedException, ExecutionException {
+    if (segments.isEmpty()) {
+      throw new IllegalStateException("Unable to aggregate packets; no segments added with SegmentedFutureData.add().");
     }
-    
-    // build aggregated packet (copy first packet)
     Data firstData = segments.get(0).get();
-    Data data = new Data(firstData);
-    data.setName(getNameFromFirstData(firstData));
-    data.setContent(new Blob(content.toByteArray()));
-    return data;
+    Data aggregatedData = new Data(firstData);
+    aggregatedData.setName(parseName(firstData));
+    return aggregatedData;
   }
-  
-  private Name getNameFromFirstData(Data firstPacket) throws InterruptedException, ExecutionException{
-    Name firstPacketName = segments.get(0).get().getName();
-    if(SegmentedClient.hasSegment(firstPacketName)){
+
+  /**
+   * @return parse the name of the segmented packet from the first packet; this
+   * will remove the segment number if it is the last name component
+   * @throws InterruptedException
+   * @throws ExecutionException
+   */
+  private Name parseName(Data data) throws InterruptedException, ExecutionException {
+    Name firstPacketName = data.getName();
+    if (SegmentedClient.hasSegment(firstPacketName)) {
       firstPacketName = firstPacketName.getPrefix(-1);
     }
     return firstPacketName;

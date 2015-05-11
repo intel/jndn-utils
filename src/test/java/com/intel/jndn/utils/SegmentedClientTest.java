@@ -87,14 +87,8 @@ public class SegmentedClientTest {
   public void testFailureToRetrieve() throws Exception {
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/no-data");
-    List<Future<Data>> futureSegments = SegmentedClient.getDefault().getAsyncList(face, new Name("/test/no-data"));
-
-    // the list of future packets should be initialized
-    assertEquals(1, futureSegments.size());
-    assertTrue(futureSegments.get(0).isDone());
-
-    // should throw error
-    futureSegments.get(0).get();
+    Future<Data> futureData = SegmentedClient.getDefault().getAsync(face, new Name("/test/no-data"));
+    futureData.get();
   }
 
   /**

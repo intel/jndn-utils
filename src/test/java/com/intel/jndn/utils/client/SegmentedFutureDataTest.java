@@ -36,15 +36,14 @@ public class SegmentedFutureDataTest {
 
   public SegmentedFutureDataTest() {
     Face face = new MockFace();
-    List<Future<Data>> segments = new ArrayList<>();
+    instance = new SegmentedFutureData(face, new Name("/test/packet"));
     for (int i = 0; i < 10; i++) {
       Data data = new Data(new Name("/test/packet").appendSegment(i));
       data.setContent(new Blob("."));
       FutureData future = new FutureData(face, data.getName());
       future.resolve(data);
-      segments.add(future);
+      instance.add(future);
     }
-    instance = new SegmentedFutureData(new Name("/test/packet"), segments);
   }
 
   @Test
@@ -75,9 +74,8 @@ public class SegmentedFutureDataTest {
     Data data = new Data(new Name("/test/packet").appendSegment(0));
     FutureData future = new FutureData(face, data.getName());
     
-    List<Future<Data>> segments = new ArrayList<>();
-    segments.add(future);
-    SegmentedFutureData segmentedFuture = new SegmentedFutureData(new Name("/test/packet"), segments);
+    SegmentedFutureData segmentedFuture = new SegmentedFutureData(face, new Name("/test/packet"));
+    segmentedFuture.add(future);
     
     segmentedFuture.get(10, TimeUnit.MILLISECONDS);
   }
