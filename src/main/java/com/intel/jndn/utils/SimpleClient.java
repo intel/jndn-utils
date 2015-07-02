@@ -13,10 +13,9 @@
  */
 package com.intel.jndn.utils;
 
-import com.intel.jndn.utils.client.FutureData;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import net.named_data.jndn.Data;
@@ -26,6 +25,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
 import java.util.logging.Logger;
+import net.named_data.jndn.encoding.EncodingException;
 
 /**
  * Provide a client to simplify information retrieval over the NDN network.
@@ -38,11 +38,13 @@ public class SimpleClient implements Client {
   public static final long DEFAULT_TIMEOUT = 2000;
   private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
   private static SimpleClient defaultInstance;
+  private final long sleepTime;
+  private final long interestLifetime;
 
   /**
    * Singleton access for simpler client use
    *
-   * @return
+   * @return a default client
    */
   public static SimpleClient getDefault() {
     if (defaultInstance == null) {
@@ -52,17 +54,32 @@ public class SimpleClient implements Client {
   }
 
   /**
-   * Asynchronously request the Data for an Interest. This will send the
-   * Interest and return immediately; use futureData.get() to block until the
-   * Data returns (see FutureData) or manage the event processing independently.
+   * Build a simple client
    *
-   * @param face
-   * @param interest
-   * @return
+   * @param sleepTime for synchronous processing, the time to sleep the thread
+   * between {@link Face#processEvents()}
+   * @param interestLifetime the {@link Interest} lifetime for default
+   * Interests; see
+   * {@link #getAsync(net.named_data.jndn.Face, net.named_data.jndn.Name)}
+   */
+  public SimpleClient(long sleepTime, long interestLifetime) {
+    this.sleepTime = sleepTime;
+    this.interestLifetime = interestLifetime;
+  }
+
+  /**
+   * Build a simple client using default parameters
+   */
+  public SimpleClient() {
+    this(DEFAULT_SLEEP_TIME, DEFAULT_TIMEOUT);
+  }
+
+  /**
+   * {@inheritDoc}
    */
   @Override
-  public Future<Data> getAsync(Face face, Interest interest) {
-    final FutureData futureData = new FutureData(face, interest.getName());
+  public CompletableFuture<Data> getAsync(Face face, Interest interest) {
+    final CompletableFuture futureData = new CompletableFuture<>();
 
     // send interest
     logger.log(Level.FINER, "Sending interest for: " + interest.getName().toUri());
@@ -70,64 +87,64 @@ public class SimpleClient implements Client {
       face.expressInterest(interest, new OnData() {
         @Override
         public void onData(Interest interest, Data data) {
-          futureData.resolve(data);
+          futureData.complete(data);
         }
       }, new OnTimeout() {
         @Override
         public void onTimeout(Interest interest) {
-          futureData.reject(new TimeoutException());
+          String message = interest.getInterestLifetimeMilliseconds() + "ms timeout exceeded";
+          futureData.completeExceptionally(new TimeoutException(message));
         }
       });
     } catch (IOException e) {
       logger.log(Level.FINE, "IO failure while sending interest: ", e);
-      futureData.reject(e);
+      futureData.completeExceptionally(e);
     }
 
     return futureData;
   }
 
   /**
-   * Synchronously retrieve the Data for a Name using a default interest (e.g. 2
-   * second timeout); this will block until complete (i.e. either data is
-   * received or the interest times out).
-   *
-   * @param face
-   * @param name
-   * @return
+   * {@inheritDoc}
    */
-  public Future<Data> getAsync(Face face, Name name) {
+  @Override
+  public CompletableFuture<Data> getAsync(Face face, Name name) {
     return getAsync(face, getDefaultInterest(name));
   }
 
   /**
-   * Synchronously retrieve the Data for an Interest; this will block until
-   * complete (i.e. either data is received or the interest times out).
-   *
-   * @param face
-   * @param interest
-   * @return Data packet or null
-   * @throws java.io.IOException
+   * {@inheritDoc}
    */
   @Override
   public Data getSync(Face face, Interest interest) throws IOException {
+    CompletableFuture<Data> future = getAsync(face, interest);
     try {
-      return getAsync(face, interest).get();
-    } catch (ExecutionException | InterruptedException e) {
+      // process events until complete
+      while (!future.isDone()) {
+        synchronized (face) {
+          face.processEvents();
+        }
+        
+        if (sleepTime > 0) {
+          try{
+            Thread.sleep(sleepTime);
+          }
+          catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+      return future.get();
+    } catch (InterruptedException | ExecutionException | EncodingException e) {
       logger.log(Level.FINE, "Failed to retrieve data.", e);
       throw new IOException("Failed to retrieve data.", e);
     }
   }
 
   /**
-   * Synchronously retrieve the Data for a Name using a default interest (e.g. 2
-   * second timeout); this will block until complete (i.e. either data is
-   * received or the interest times out).
-   *
-   * @param face
-   * @param name
-   * @return
-   * @throws java.io.IOException
+   * {@inheritDoc}
    */
+  @Override
   public Data getSync(Face face, Name name) throws IOException {
     return getSync(face, getDefaultInterest(name));
   }
@@ -139,8 +156,8 @@ public class SimpleClient implements Client {
    * @param name
    * @return
    */
-  public static Interest getDefaultInterest(Name name) {
-    Interest interest = new Interest(name, DEFAULT_TIMEOUT);
+  public Interest getDefaultInterest(Name name) {
+    Interest interest = new Interest(name, interestLifetime);
     return interest;
   }
 }

@@ -13,11 +13,12 @@
  */
 package com.intel.jndn.utils;
 
+import com.intel.jndn.mock.MockFace;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.intel.jndn.mock.MockTransport;
-import com.intel.jndn.utils.client.FutureData;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +26,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 import org.junit.rules.ExpectedException;
 
 /**
- * Test Client.java
+ * Test SimpleClient.java
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -39,11 +42,6 @@ public class SimpleClientTest {
   private static final Logger logger = Logger.getLogger(SimpleClient.class.getName());
   public ExpectedException thrown = ExpectedException.none();
 
-  /**
-   * Test retrieving data synchronously
-   *
-   * @throws java.io.IOException
-   */
   @Test
   public void testGetSync() throws IOException {
     // setup face
@@ -62,13 +60,8 @@ public class SimpleClientTest {
     assertEquals(new Blob("...").buf(), data.getContent().buf());
   }
 
-  /**
-   * Test retrieving data asynchronously
-   *
-   * @throws InterruptedException
-   */
   @Test
-  public void testGetAsync() throws InterruptedException, ExecutionException {
+  public void testGetAsync() throws InterruptedException, ExecutionException, IOException, EncodingException {
     // setup face
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
@@ -82,47 +75,56 @@ public class SimpleClientTest {
     logger.info("Client expressing interest asynchronously: /test/async");
     SimpleClient client = new SimpleClient();
     Future<Data> futureData = client.getAsync(face, new Name("/test/async"));
-
     assertTrue(!futureData.isDone());
-    futureData.get();
+    
+    // process events to retrieve data
+    face.processEvents();
     assertTrue(futureData.isDone());
     assertEquals(new Blob("...").toString(), futureData.get().getContent().toString());
   }
 
-  /**
-   * Test that asynchronous client times out correctly
-   *
-   * @throws InterruptedException
-   */
-  @Test(expected = TimeoutException.class)
-  public void testTimeout() throws InterruptedException, ExecutionException, TimeoutException {
+  @Test
+  public void testTimeout() throws Exception {
     // setup face
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/timeout");
-    Future<Data> futureData = SimpleClient.getDefault().getAsync(face, new Name("/test/timeout"));
+    Interest interest = new Interest(new Name("/test/timeout"), 1);
+    CompletableFuture<Data> futureData = SimpleClient.getDefault().getAsync(face, interest);
 
-    // expect an exception
-    futureData.get(50, TimeUnit.MILLISECONDS);
+    // wait for NDN timeout
+    Thread.sleep(2);
+    face.processEvents();
+    
+    // verify that the client is completing the future with a TimeoutException
+    assertTrue(futureData.isDone());
+    assertTrue(futureData.isCompletedExceptionally());
+    try{
+      futureData.get();
+    }
+    catch(ExecutionException e){
+      assertTrue(e.getCause() instanceof TimeoutException);
+    }
   }
 
-  /**
-   * Test that a sync failed request fails with an exception.
-   */
-  @Test(expected = ExecutionException.class)
-  public void testAsyncFailureToRetrieve() throws InterruptedException, ExecutionException {
-    Future future = SimpleClient.getDefault().getAsync(new Face(), new Name("/test/no-data"));
-    future.get();
-    assertTrue(future.isDone());
+  @Test(expected = Exception.class)
+  public void testAsyncFailureToRetrieve() throws Exception {
+    Face face = new MockFace();
+    
+    logger.info("Client expressing interest asynchronously: /test/no-data");
+    Interest interest = new Interest(new Name("/test/no-data"), 10);
+    Future future = SimpleClient.getDefault().getAsync(face, interest);
+    
+    face.processEvents();
+    future.get(15, TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Test that a sync failed request fails with an exception.
-   */
   @Test(expected = IOException.class)
   public void testSyncFailureToRetrieve() throws IOException {
-    SimpleClient.getDefault().getSync(new Face(), new Name("/test/no-data"));
+    logger.info("Client expressing interest synchronously: /test/no-data");
+    Interest interest = new Interest(new Name("/test/no-data"), 10);
+    SimpleClient.getDefault().getSync(new Face(), interest);
   }
 }
