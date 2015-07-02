@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.intel.jndn.utils</groupId>
 	<artifactId>jndn-utils</artifactId>
-	<version>0.10.2</version>
+	<version>1.0.0</version>
 	<name>jndn-utils</name>
 	<description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network</description>
 	<url>https://github.com/01org/jndn-utils</url>
@@ -20,6 +20,12 @@
 			<url>http://github.com/andrewsbrown</url>
 		</developer>
 	</developers>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 	<scm>
 		<url>https://github.com/01org/jndn-utils</url>
 		<connection>scm:git:git@github.com:01org/jndn-utils.git</connection>
@@ -75,11 +81,13 @@
 		</plugins>
 	</build>
 	<profiles>
+		
+		<!-- Use OSSRH-directed plugins (see http://central.sonatype.org/pages/apache-maven.html) 
+		for deployment to Maven central; e.g. `mvn deploy -P ossrh`-->
 		<profile>
 			<id>ossrh</id>
 			<build>
 				<plugins>
-					<!-- OSSRH-directed plugins (see http://central.sonatype.org/pages/apache-maven.html) -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
@@ -96,7 +104,10 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.10.1</version>
+						<version>2.10.2</version>
+						<configuration>
+							<additionalparam>-Xdoclint:none</additionalparam>
+						</configuration>
 						<executions>
 							<execution>
 								<id>attach-javadocs</id>
@@ -135,8 +146,40 @@
 				</plugins>
 			</build>
 		</profile>
+		
+		<!-- Use failsafe to run integration tests with an NFD instance; e.g.
+		`mvn verify -Pnfd-integration-tests -Dnfd.ip=10.0.0.1; these are not run by default
+		due to the external NFD dependency -->
+		<profile>
+			<id>nfd-integration-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>2.18.1</version>
+						<executions>
+							<execution>
+								<id>runIntegrationTests</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>verifyIntegrationTests</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>	
+		</profile>
 
-		<!-- run `mvn clean javadoc:javadoc scm-publish:publish-scm -P docs` to push
+		<!-- Run `mvn clean javadoc:javadoc scm-publish:publish-scm -P docs` to push
 		Javadoc to Github -->
 		<profile>
 			<id>docs</id>
@@ -146,6 +189,9 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
 						<version>2.10.2</version>
+						<configuration>
+							<additionalparam>-Xdoclint:none</additionalparam>
+						</configuration>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
