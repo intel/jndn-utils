@@ -1,5 +1,7 @@
 com.intel.jndn.utils
 com.intel.jndn.utils.client
-com.intel.jndn.utils.repository
+com.intel.jndn.utils.client.impl
+com.intel.jndn.utils.processing.impl
+com.intel.jndn.utils.repository.impl
 com.intel.jndn.utils.server
-com.intel.jndn.utils.server.pipeline
+com.intel.jndn.utils.server.impl
