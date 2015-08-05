@@ -8,7 +8,6 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 
-
 ### Java ###
 *.class
 
@@ -30,3 +29,6 @@ hs_err_pid*
 .classpath
 .project
 .settings
+
+# Netbeans specific project files
+nbactions.xml
