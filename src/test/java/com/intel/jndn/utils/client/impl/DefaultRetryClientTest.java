@@ -15,15 +15,19 @@ package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.utils.TestHelper.TestCounter;
-import java.io.IOException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
-import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Test DefaultRetryClient
@@ -32,11 +36,17 @@ import org.junit.Test;
  */
 public class DefaultRetryClientTest {
 
-  DefaultRetryClient client = new DefaultRetryClient(3);
-  MockFace face = new MockFace();
+  DefaultRetryClient client;
+  MockFace face;
   Name name = new Name("/test/retry/client");
   Interest interest = new Interest(name, 0.0);
   TestCounter counter = new TestCounter();
+
+  @Before
+  public void before() throws Exception {
+    face = new MockFace();
+    client = new DefaultRetryClient(3);
+  }
 
   @Test
   public void testRetry() throws Exception {
@@ -67,7 +77,7 @@ public class DefaultRetryClientTest {
   }
 
   protected void respondToRetryAttempt() throws IOException, EncodingException {
-    face.getTransport().respondWith(new Data(name));
+    face.receive(new Data(name));
     face.processEvents();
     assertEquals(1, counter.count);
   }

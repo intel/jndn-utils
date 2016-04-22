@@ -22,6 +22,7 @@ import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,8 +33,14 @@ import static org.junit.Assert.*;
  */
 public class ServerBaseImplTest {
 
-  Face face = new MockFace();
-  ServerBaseImpl instance = new ServerBaseImplImpl(face, new Name("/test/base"));
+  Face face;
+  ServerBaseImpl instance;
+
+  @Before
+  public void before() throws Exception {
+    face = new MockFace();
+    instance = new ServerBaseImplImpl(face, new Name("/test/base"));
+  }
 
   public class ServerBaseImplImpl extends ServerBaseImpl {
 

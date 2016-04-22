@@ -21,6 +21,8 @@ import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 import static org.junit.Assert.*;
+
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -29,8 +31,14 @@ import org.junit.Test;
  */
 public class SegmentedServerTest {
 
-  MockFace face = new MockFace();
-  SegmentedServer instance = new SegmentedServer(face, new Name("/test/prefix"));
+  MockFace face;
+  SegmentedServer instance;
+
+  @Before
+  public void before() throws Exception {
+    face = new MockFace();
+    instance = new SegmentedServer(face, new Name("/test/prefix"));
+  }
 
   @Test
   public void testGetPrefix() {

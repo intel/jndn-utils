@@ -17,12 +17,12 @@ import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.TestHelper.TestCounter;
 import com.intel.jndn.utils.client.DataStream;
-import java.util.Random;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test DefaultSegmentedClient
@@ -88,7 +88,7 @@ public class DefaultSegmentedClientTest {
     }
 
     assertEquals(5, counter.count);
-    assertEquals(5, face.getTransport().getSentInterestPackets().size());
+    assertEquals(5, face.sentInterests.size());
     assertEquals("01234", stream.assemble().getContent().toString());
   }
 }

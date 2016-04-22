@@ -24,6 +24,8 @@ import net.named_data.jndn.OnData;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 import static org.junit.Assert.*;
+
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -33,8 +35,14 @@ import org.junit.Test;
  */
 public class SimpleServerTest {
 
-  MockFace face = new MockFace();
-  SimpleServer instance = new SimpleServer(face, new Name("/test/prefix"));
+  MockFace face;
+  SimpleServer instance;
+
+  @Before
+  public void before() throws Exception {
+    face = new MockFace();
+    instance = new SimpleServer(face, new Name("/test/prefix"));
+  }
 
   @Test
   public void testGetPrefix() {
@@ -81,7 +89,7 @@ public class SimpleServerTest {
 
   private void sendAndCheckOneInterest(Name interestName) throws EncodingException, IOException {
     Interest interest = new Interest(interestName);
-    face.getTransport().clear();
+
     face.expressInterest(interest, new OnData() {
       @Override
       public void onData(Interest interest, Data data) {
@@ -90,7 +98,7 @@ public class SimpleServerTest {
     });
 
     face.processEvents();
-    assertEquals(1, face.getTransport().getSentDataPackets().size());
-    assertEquals("...", face.getTransport().getSentDataPackets().get(0).getContent().toString());
+    assertEquals(1, face.sentData.size());
+    assertEquals("...", face.sentData.get(0).getContent().toString());
   }
 }

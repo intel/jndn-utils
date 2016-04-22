@@ -16,10 +16,7 @@ package com.intel.jndn.utils.client.impl;
 import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.client.SegmentationType;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import com.intel.jndn.utils.server.impl.SimpleServer;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -27,8 +24,18 @@ import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.util.Blob;
-import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -36,8 +43,14 @@ import org.junit.Test;
  */
 public class AdvancedClientTest {
 
-  MockFace face = new MockFace();
-  AdvancedClient instance = new AdvancedClient();
+  MockFace face;
+  AdvancedClient instance;
+
+  @Before
+  public void before() throws Exception {
+    face = new MockFace();
+    instance = new AdvancedClient();
+  }
 
   @Test
   public void testRetries() throws Exception {
@@ -91,11 +104,11 @@ public class AdvancedClientTest {
   public void testWhenDataNameIsLongerThanInterestName() throws Exception {
     final List<Data> segments = TestHelper.buildSegments(new Name("/a/b/c/d"), 0, 10);
     for (Data segment : segments) {
-      face.addResponse(segment.getName(), segment);
+      face.receive(segment);
     }
 
     Name name = new Name("/a/b");
-    face.addResponse(name, segments.get(0));
+    face.receive(segments.get(0));
 
     Data data = instance.getSync(face, name);
     assertNotNull(data);
@@ -112,7 +125,7 @@ public class AdvancedClientTest {
   public void testNoContent() throws Exception {
     Name name = new Name("/test/no-content").appendSegment(0);
     Data data = TestHelper.buildData(name, "", 0);
-    face.addResponse(name, data);
+    face.receive(data);
 
     Future<Data> result = instance.getAsync(face, name);
     face.processEvents();
@@ -131,12 +144,12 @@ public class AdvancedClientTest {
     Data data1 = new Data(new Name("/test/content-length").appendSegment(0));
     data1.setContent(new Blob("0123456789"));
     data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
-    face.addResponse(data1.getName(), data1);
+    face.receive(data1);
 
     Data data2 = new Data(new Name("/test/content-length").appendSegment(1));
     data2.setContent(new Blob("0123456789"));
     data1.getMetaInfo().setFinalBlockId(Name.Component.fromNumberWithMarker(1, 0x00));
-    face.addResponse(data2.getName(), data2);
+    face.receive(data2);
 
     Future<Data> result = instance.getAsync(face, new Name("/test/content-length").appendSegment(0));
     face.processEvents();
@@ -155,7 +168,7 @@ public class AdvancedClientTest {
     Name name = new Name("/test/no-final-block-id");
     Data data = new Data(name);
     data.setContent(new Blob("1"));
-    face.addResponse(name, data);
+    face.receive(data);
 
     Future<Data> result = instance.getAsync(face, name);
     face.processEvents();

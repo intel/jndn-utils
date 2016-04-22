@@ -13,11 +13,15 @@
  */
 package com.intel.jndn.utils.client.impl;
 
-import com.intel.jndn.utils.client.impl.SimpleClient;
 import com.intel.jndn.mock.MockFace;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.util.Blob;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import com.intel.jndn.mock.MockTransport;
+import org.junit.rules.ExpectedException;
+
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -25,13 +29,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.util.Blob;
-import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test SimpleClient.java
@@ -44,15 +44,14 @@ public class SimpleClientTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void testGetSync() throws IOException {
+  public void testGetSync() throws Exception {
     // setup face
-    MockTransport transport = new MockTransport();
-    Face face = new Face(transport, null);
+    MockFace face = new MockFace();
 
     // setup return data
     Data response = new Data(new Name("/test/sync"));
     response.setContent(new Blob("..."));
-    transport.respondWith(response);
+    face.receive(response);
 
     // retrieve data
     logger.info("Client expressing interest synchronously: /test/sync");
@@ -62,15 +61,14 @@ public class SimpleClientTest {
   }
 
   @Test
-  public void testGetAsync() throws InterruptedException, ExecutionException, IOException, EncodingException {
+  public void testGetAsync() throws Exception {
     // setup face
-    MockTransport transport = new MockTransport();
-    Face face = new Face(transport, null);
+    MockFace face = new MockFace();
 
     // setup return data
     Data response = new Data(new Name("/test/async"));
     response.setContent(new Blob("..."));
-    transport.respondWith(response);
+    face.receive(response);
 
     // retrieve data
     logger.info("Client expressing interest asynchronously: /test/async");
@@ -87,8 +85,7 @@ public class SimpleClientTest {
   @Test
   public void testTimeout() throws Exception {
     // setup face
-    MockTransport transport = new MockTransport();
-    Face face = new Face(transport, null);
+    MockFace face = new MockFace();
 
     // retrieve non-existent data, should timeout
     logger.info("Client expressing interest asynchronously: /test/timeout");
