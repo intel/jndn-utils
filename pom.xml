@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.intel.jndn.utils</groupId>
 	<artifactId>jndn-utils</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<name>jndn-utils</name>
 	<description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network</description>
 	<url>https://github.com/01org/jndn-utils</url>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>net.named-data</groupId>
 			<artifactId>jndn</artifactId>
-			<version>0.11</version>
+			<version>0.13</version>
 		</dependency>
 		<!-- Test dependencies -->
 		<dependency>
@@ -81,8 +81,8 @@
 		</plugins>
 	</build>
 	<profiles>
-		
-		<!-- Use OSSRH-directed plugins (see http://central.sonatype.org/pages/apache-maven.html) 
+
+		<!-- Use OSSRH-directed plugins (see http://central.sonatype.org/pages/apache-maven.html)
 		for deployment to Maven central; e.g. `mvn deploy -P ossrh`-->
 		<profile>
 			<id>ossrh</id>
@@ -146,7 +146,7 @@
 				</plugins>
 			</build>
 		</profile>
-		
+
 		<!-- Use failsafe to run integration tests with an NFD instance; e.g.
 		`mvn verify -Pnfd-integration-tests -Dnfd.ip=10.0.0.1; these are not run by default
 		due to the external NFD dependency -->
@@ -176,7 +176,7 @@
 						</executions>
 					</plugin>
 				</plugins>
-			</build>	
+			</build>
 		</profile>
 
 		<!-- Run `mvn clean javadoc:javadoc scm-publish:publish-scm -P docs` to push
