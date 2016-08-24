@@ -14,9 +14,9 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.mock.MockFace;
+import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.client.SegmentationType;
-import com.intel.jndn.utils.server.impl.SimpleServer;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -32,22 +32,20 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
- *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class AdvancedClientTest {
 
-  MockFace face;
-  AdvancedClient instance;
+  private MockFace face;
+  private AdvancedClient instance;
+  private MockForwarder forwarder;
 
   @Before
   public void before() throws Exception {
+    forwarder = new MockForwarder();
     face = new MockFace();
     instance = new AdvancedClient();
   }
@@ -70,8 +68,8 @@ public class AdvancedClientTest {
   public void testGetSync() throws Exception {
     Name name = new Name("/segmented/data");
 
+    Face face = forwarder.connect();
     face.registerPrefix(name, new OnInterestCallback() {
-      private int count = 0;
       private int max = 9;
 
       @Override
@@ -93,12 +91,12 @@ public class AdvancedClientTest {
     Data data = instance.getSync(face, new Name(name).appendSegment(0));
     assertEquals(10, data.getContent().size());
   }
-  
-    /**
+
+  /**
    * Verify that Data returned with a different Name than the Interest is still
    * segmented correctly.
    *
-   * @throws Exception
+   * @throws Exception if client fails
    */
   @Test
   public void testWhenDataNameIsLongerThanInterestName() throws Exception {
@@ -119,7 +117,7 @@ public class AdvancedClientTest {
    * Verify that Data packets with no content do not cause errors; identifies
    * bug.
    *
-   * @throws Exception
+   * @throws Exception if client fails
    */
   @Test
   public void testNoContent() throws Exception {
@@ -137,7 +135,7 @@ public class AdvancedClientTest {
    * Verify that segmented content is the correct length when retrieved by the
    * client.
    *
-   * @throws Exception
+   * @throws Exception if client fails
    */
   @Test
   public void testContentLength() throws Exception {
@@ -159,9 +157,9 @@ public class AdvancedClientTest {
 
   /**
    * If a Data packet does not have a FinalBlockId, the AdvancedClient should
- just return the packet.
+   * just return the packet.
    *
-   * @throws Exception
+   * @throws Exception if client fails
    */
   @Test
   public void testNoFinalBlockId() throws Exception {

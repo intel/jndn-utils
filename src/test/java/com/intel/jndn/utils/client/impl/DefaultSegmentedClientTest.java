@@ -13,11 +13,14 @@
  */
 package com.intel.jndn.utils.client.impl;
 
+import com.intel.jndn.mock.MeasurableFace;
 import com.intel.jndn.mock.MockFace;
+import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.TestHelper.TestCounter;
 import com.intel.jndn.utils.client.DataStream;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import org.junit.Test;
@@ -27,11 +30,11 @@ import static org.junit.Assert.assertEquals;
 /**
  * Test DefaultSegmentedClient
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultSegmentedClientTest {
 
-  DefaultSegmentedClient instance = new DefaultSegmentedClient();
+  private DefaultSegmentedClient instance = new DefaultSegmentedClient();
 
   @Test
   public void testGetSegmentsAsync() throws Exception {
@@ -41,9 +44,7 @@ public class DefaultSegmentedClientTest {
     DataStream stream = instance.getSegmentsAsync(face, interest);
 
     TestCounter counter = new TestCounter();
-    stream.observe((i, d) -> {
-      counter.count++;
-    });
+    stream.observe((i, d) -> counter.count++);
 
     for (Data segment : TestHelper.buildSegments(name, 0, 5)) {
       stream.onData(interest, segment);
@@ -72,15 +73,14 @@ public class DefaultSegmentedClientTest {
 
   @Test
   public void verifyThatSegmentsAreRetrievedOnlyOnce() throws Exception {
-    MockFace face = new MockFace();
+    MockForwarder forwarder = new MockForwarder();
+    Face face = forwarder.connect();
     Name name = new Name("/test/segmented/client");
     Interest interest = new Interest(name);
     DataStream stream = instance.getSegmentsAsync(face, interest);
 
     TestCounter counter = new TestCounter();
-    stream.observe((i, d) -> {
-      counter.count++;
-    });
+    stream.observe((i, d) -> counter.count++);
 
     for (Data segment : TestHelper.buildSegments(name, 0, 5)) {
       face.putData(segment);
@@ -88,7 +88,7 @@ public class DefaultSegmentedClientTest {
     }
 
     assertEquals(5, counter.count);
-    assertEquals(5, face.sentInterests.size());
+    assertEquals(5, ((MeasurableFace) face).sentInterests().size());
     assertEquals("01234", stream.assemble().getContent().toString());
   }
 }

@@ -32,7 +32,7 @@ public class DefaultRetryClient implements RetryClient {
 
   private static final Logger logger = Logger.getLogger(DefaultRetryClient.class.getName());
   private final int numRetriesAllowed;
-  private int totalRetries = 0;
+  private volatile int totalRetries = 0;
 
   public DefaultRetryClient(int numRetriesAllowed) {
     this.numRetriesAllowed = numRetriesAllowed;

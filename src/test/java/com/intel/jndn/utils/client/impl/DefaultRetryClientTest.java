@@ -13,18 +13,14 @@
  */
 package com.intel.jndn.utils.client.impl;
 
-import com.intel.jndn.mock.MockFace;
+import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.TestHelper.TestCounter;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnTimeout;
-import net.named_data.jndn.encoding.EncodingException;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -32,52 +28,42 @@ import static org.junit.Assert.fail;
 /**
  * Test DefaultRetryClient
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultRetryClientTest {
 
-  DefaultRetryClient client;
-  MockFace face;
-  Name name = new Name("/test/retry/client");
-  Interest interest = new Interest(name, 0.0);
-  TestCounter counter = new TestCounter();
+  private static final double INTEREST_LIFETIME_MS = 1.0;
+  private DefaultRetryClient client;
+  private Name name = new Name("/test/retry/client");
+  private Interest interest = new Interest(name, INTEREST_LIFETIME_MS);
+  private TestCounter counter = new TestCounter();
 
   @Before
   public void before() throws Exception {
-    face = new MockFace();
     client = new DefaultRetryClient(3);
   }
 
   @Test
   public void testRetry() throws Exception {
-
-    client.retry(face, interest, new OnData() {
-      @Override
-      public void onData(Interest interest, Data data) {
-        counter.count++;
-      }
-    }, new OnTimeout() {
-      @Override
-      public void onTimeout(Interest interest) {
-        fail("Should not timeout.");
-      }
-    });
+    MockForwarder forwarder = new MockForwarder();
+    Face face = forwarder.connect();
+    client.retry(face, interest, (interest1, data) -> counter.count++, interest2 -> fail("Should not timeout."));
     assertEquals(1, client.totalRetries());
 
-    timeoutAndVerifyRetry(2);
-    timeoutAndVerifyRetry(3);
-    respondToRetryAttempt();
+    timeoutAndVerifyRetry(face, 2);
+    timeoutAndVerifyRetry(face, 3);
+    respondToRetryAttempt(face);
   }
 
-  private void timeoutAndVerifyRetry(int retryCount) throws Exception {
-    Thread.sleep(1);
+  private void timeoutAndVerifyRetry(Face face, int retryCount) throws Exception {
+    Thread.sleep((long) INTEREST_LIFETIME_MS + 1); // necessary to timeout the pending interest
     face.processEvents();
     assertEquals(retryCount, client.totalRetries());
     assertEquals(0, counter.count);
   }
 
-  protected void respondToRetryAttempt() throws IOException, EncodingException {
-    face.receive(new Data(name));
+  private void respondToRetryAttempt(Face face) throws Exception {
+    face.putData(new Data(name));
     face.processEvents();
     assertEquals(1, counter.count);
   }

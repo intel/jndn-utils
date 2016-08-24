@@ -150,7 +150,7 @@ public class AdvancedClient extends SimpleClient implements SegmentedClient, Str
       this.face = face;
       this.stream = stream;
     }
-    
+
     @Override
     public void onTimeout(Interest failedInterest) {
       logger.info("Timeout: " + failedInterest.toUri());
