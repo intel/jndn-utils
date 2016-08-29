@@ -5,7 +5,7 @@
 
   <groupId>com.intel.jndn.utils</groupId>
   <artifactId>jndn-utils</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <name>jndn-utils</name>
   <description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network
   </description>
