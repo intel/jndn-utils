@@ -13,11 +13,14 @@
  */
 package com.intel.jndn.utils.server.impl;
 
+import com.intel.jndn.mock.MeasurableFace;
 import com.intel.jndn.mock.MockFace;
+import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.server.RespondWithBlob;
 import com.intel.jndn.utils.server.RespondWithData;
 import java.io.IOException;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
@@ -35,12 +38,13 @@ import org.junit.Test;
  */
 public class SimpleServerTest {
 
-  MockFace face;
+  Face face;
   SimpleServer instance;
 
   @Before
   public void before() throws Exception {
-    face = new MockFace();
+    MockForwarder forwarder = new MockForwarder();
+    face = forwarder.connect();
     instance = new SimpleServer(face, new Name("/test/prefix"));
   }
 
@@ -90,15 +94,10 @@ public class SimpleServerTest {
   private void sendAndCheckOneInterest(Name interestName) throws EncodingException, IOException {
     Interest interest = new Interest(interestName);
 
-    face.expressInterest(interest, new OnData() {
-      @Override
-      public void onData(Interest interest, Data data) {
-        assertEquals("/test/prefix/response", data.getName().toUri());
-      }
-    });
-
+    face.expressInterest(interest, (interest1, data) -> assertEquals(interestName, data.getName()));
     face.processEvents();
-    assertEquals(1, face.sentData.size());
-    assertEquals("...", face.sentData.get(0).getContent().toString());
+
+    assertEquals(1, ((MeasurableFace) face).sentDatas().size());
+    assertEquals("...", ((MeasurableFace) face).sentDatas().iterator().next().getContent().toString());
   }
 }

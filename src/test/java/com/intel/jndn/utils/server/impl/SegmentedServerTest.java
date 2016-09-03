@@ -13,10 +13,12 @@
  */
 package com.intel.jndn.utils.server.impl;
 
+import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.client.impl.AdvancedClient;
 import com.intel.jndn.mock.MockFace;
 import java.io.IOException;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
@@ -31,12 +33,13 @@ import org.junit.Test;
  */
 public class SegmentedServerTest {
 
-  MockFace face;
+  Face face;
   SegmentedServer instance;
 
   @Before
   public void before() throws Exception {
-    face = new MockFace();
+    MockForwarder forwarder = new MockForwarder();
+    face = forwarder.connect();
     instance = new SegmentedServer(face, new Name("/test/prefix"));
   }
 
