@@ -27,10 +27,10 @@ Use a `SimpleClient` or `AdvancedClient` (provides segmentation, retries, and st
  to retrieve data from the network. For example:
 ```
 // retrieve a single Data packet synchronously, will block until complete
-Data singleData = SimpleClient.getDefault().getSync(face, name);
+Data singleData = SimpleClient.getDefault().getSync(face, prefix);
 
-// retrieve segmented Data packets (i.e. with a last Component containing a segment number and a valid FinalBlockId) by name
-CompletableFuture<Data> segmentedData = AdvancedClient.getDefault().getAsync(face, name);
+// retrieve segmented Data packets (i.e. with a last Component containing a segment number and a valid FinalBlockId) by prefix
+CompletableFuture<Data> segmentedData = AdvancedClient.getDefault().getAsync(face, prefix);
 ```
 
 Use `SimpleServer` or `SegmentedServer` to serve data on the network. For example:

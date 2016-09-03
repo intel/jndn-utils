@@ -20,7 +20,7 @@ import net.named_data.jndn.Interest;
 /**
  * Define API for storing and retrieving NDN packets
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface Repository {
 
@@ -29,7 +29,7 @@ public interface Repository {
    *
    * @param data a {@link Data} packet
    */
-  public void put(Data data);
+  void put(Data data);
 
   /**
    * Retrieve a {@link Data} packet in the repository; this method should
@@ -39,7 +39,7 @@ public interface Repository {
    * @return a {@link Data} packet
    * @throws DataNotFoundException if the packet is not found
    */
-  public Data get(Interest interest) throws DataNotFoundException;
+  Data get(Interest interest) throws DataNotFoundException;
 
   /**
    * Check if this repository can satisfy the {@link Interest} with a
@@ -49,10 +49,10 @@ public interface Repository {
    * @param interest the {@link Interest} to attempt to satisfy
    * @return true if a {@link Data} exists that satisfies the {@link Interest}
    */
-  public boolean satisfies(Interest interest);
+  boolean satisfies(Interest interest);
 
   /**
    * Remove all stale {@link Data} packets from the repository.
    */
-  public void cleanup();
+  void cleanup();
 }

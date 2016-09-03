@@ -6,7 +6,7 @@
   <groupId>com.intel.jndn.utils</groupId>
   <artifactId>jndn-utils</artifactId>
   <version>1.0.4</version>
-  <name>jndn-utils</name>
+  <prefix>jndn-utils</prefix>
   <description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network
   </description>
   <url>https://github.com/01org/jndn-utils</url>
@@ -14,14 +14,14 @@
 
   <licenses>
     <license>
-      <name>LGPL v3</name>
+      <prefix>LGPL v3</prefix>
       <url>https://www.gnu.org/licenses/lgpl.html</url>
     </license>
   </licenses>
 
   <developers>
     <developer>
-      <name>Andrew Brown</name>
+      <prefix>Andrew Brown</prefix>
       <url>http://github.com/andrewsbrown</url>
     </developer>
   </developers>
