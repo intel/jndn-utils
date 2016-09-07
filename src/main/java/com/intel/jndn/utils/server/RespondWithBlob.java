@@ -20,9 +20,9 @@ import net.named_data.jndn.util.Blob;
 /**
  * Functional interface for serving data from Server.on()
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface RespondWithBlob {
 
-  public Blob onInterest(Name prefix, Interest interest) throws Exception;
+  Blob onInterest(Name prefix, Interest interest) throws Exception;
 }

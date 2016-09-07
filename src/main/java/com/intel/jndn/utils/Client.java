@@ -13,17 +13,18 @@
  */
 package com.intel.jndn.utils;
 
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Base functionality provided by all NDN clients in this package.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface Client {
 
@@ -38,7 +39,7 @@ public interface Client {
    * @param interest the {@link Interest} to send over the network
    * @return a future {@link Data} packet
    */
-  public CompletableFuture<Data> getAsync(Face face, Interest interest);
+  CompletableFuture<Data> getAsync(Face face, Interest interest);
 
   /**
    * Convenience method for calling
@@ -50,7 +51,7 @@ public interface Client {
    * @param name the {@link Name} to wrap inside a default {@link Interest}
    * @return a future {@link Data} packet
    */
-  public CompletableFuture<Data> getAsync(Face face, Name name);
+  CompletableFuture<Data> getAsync(Face face, Name name);
 
   /**
    * Synchronously retrieve the {@link Data} for an {@link Interest}; this will
@@ -64,7 +65,7 @@ public interface Client {
    * @return a {@link Data} packet
    * @throws java.io.IOException if the request fails
    */
-  public Data getSync(Face face, Interest interest) throws IOException;
+  Data getSync(Face face, Interest interest) throws IOException;
   
   /**
    * Convenience method for calling
@@ -77,5 +78,5 @@ public interface Client {
    * @return a {@link Data} packet
    * @throws java.io.IOException if the request fails
    */
-  public Data getSync(Face face, Name name) throws IOException;
+  Data getSync(Face face, Name name) throws IOException;
 }

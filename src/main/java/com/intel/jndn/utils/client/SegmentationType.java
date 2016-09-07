@@ -17,7 +17,7 @@ package com.intel.jndn.utils.client;
  * Documents known partition types from
  * http://named-data.net/doc/tech-memos/naming-conventions.pdf
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public enum SegmentationType {
 

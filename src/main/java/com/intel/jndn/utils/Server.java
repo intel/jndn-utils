@@ -13,11 +13,12 @@
  */
 package com.intel.jndn.utils;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnInterestCallback;
+
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * Base interface for defining a server; see descendant interfaces for different
@@ -26,20 +27,20 @@ import net.named_data.jndn.OnInterestCallback;
  * {@link Runnable#run()} block, thus allowing different ways to manage servers
  * (e.g. single-thread vs {@link ScheduledThreadPoolExecutor}.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface Server extends Runnable, OnInterestCallback {
 
   /**
    * @return the {@link Name} prefix this server is serving on.
    */
-  public Name getPrefix();
+  Name getPrefix();
 
   /**
    * @return the registered prefix ID of the server on the {@link Face} or -1 if
    * unregistered
    */
-  public long getRegisteredPrefixId();
+  long getRegisteredPrefixId();
 
   /**
    * Add a stage to the server pipeline. Each stage should be processed once the
@@ -49,5 +50,5 @@ public interface Server extends Runnable, OnInterestCallback {
    *
    * @param stage a Data-to-Data processing stage
    */
-  public void addPostProcessingStage(ProcessingStage<Data, Data> stage);
+  void addPostProcessingStage(ProcessingStage<Data, Data> stage);
 }

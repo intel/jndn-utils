@@ -16,12 +16,12 @@ package com.intel.jndn.utils.client;
 /**
  * Callback fired when an activity is finished.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface OnComplete {
 
   /**
    * Called when an activity is finished
    */
-  public void onComplete();
+  void onComplete();
 }

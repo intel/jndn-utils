@@ -20,7 +20,7 @@ import net.named_data.jndn.encoding.EncodingException;
  * Helper methods for dealing with segmented packets (see
  * http://named-data.net/doc/tech-memos/naming-conventions.pdf).
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentationHelper {
 
@@ -33,7 +33,7 @@ public class SegmentationHelper {
    * @return true if the name is segmented
    */
   public static boolean isSegmented(Name name, byte marker) {
-    return name.size() > 0 ? name.get(-1).getValue().buf().get(0) == marker : false;
+    return name.size() > 0 && name.get(-1).getValue().buf().get(0) == marker;
   }
 
   /**

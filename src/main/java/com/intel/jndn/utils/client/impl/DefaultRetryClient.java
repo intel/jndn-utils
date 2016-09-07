@@ -14,19 +14,20 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.client.RetryClient;
-import java.io.IOException;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
 
+import java.io.IOException;
+import java.util.logging.Logger;
+
 /**
  * Default implementation of {@link RetryClient}; on request failure, this class
  * immediately retries the request until a maximum number of retries is reached.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultRetryClient implements RetryClient {
 
@@ -80,11 +81,11 @@ public class DefaultRetryClient implements RetryClient {
    */
   private class RetryContext implements OnData, OnTimeout {
 
-    public int numFailures = 0;
     public final Face face;
     public final Interest interest;
     public final OnData applicationOnData;
     public final OnTimeout applicationOnTimeout;
+    public int numFailures = 0;
 
     public RetryContext(Face face, Interest interest, OnData applicationOnData, OnTimeout applicationOnTimeout) {
       this.face = face;

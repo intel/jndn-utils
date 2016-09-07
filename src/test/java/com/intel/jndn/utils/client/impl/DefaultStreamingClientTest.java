@@ -15,14 +15,17 @@ package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.client.OnException;
-import java.io.InputStream;
 import net.named_data.jndn.Name;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.InputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultStreamingClientTest {
 

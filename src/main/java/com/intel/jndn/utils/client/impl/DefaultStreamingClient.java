@@ -18,23 +18,24 @@ import com.intel.jndn.utils.client.OnException;
 import com.intel.jndn.utils.client.SegmentationType;
 import com.intel.jndn.utils.client.SegmentedClient;
 import com.intel.jndn.utils.client.StreamingClient;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.OnData;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.OnData;
 
 /**
  * Default implementation of {@link StreamingClient}; uses a segmented client to
  * retrieve packets asynchronously and pipes them to a stream as they are
  * received.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultStreamingClient implements StreamingClient {
 

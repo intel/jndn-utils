@@ -14,7 +14,7 @@
 package com.intel.jndn.utils.server;
 
 import com.intel.jndn.utils.Server;
-import com.intel.jndn.utils.server.RespondWithData;
+
 import java.io.IOException;
 
 /**
@@ -23,7 +23,7 @@ import java.io.IOException;
  * will run a callback to determine what packet to send back. As good practice,
  * keep callback methods as short as possible.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface DynamicServer extends Server {
 
@@ -36,5 +36,5 @@ public interface DynamicServer extends Server {
    * @param callback the callback instance
    * @throws java.io.IOException if the server fails to register a prefix
    */
-  public void respondUsing(RespondWithData callback) throws IOException;
+  void respondUsing(RespondWithData callback) throws IOException;
 }

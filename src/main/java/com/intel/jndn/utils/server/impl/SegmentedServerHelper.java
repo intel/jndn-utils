@@ -13,15 +13,16 @@
  */
 package com.intel.jndn.utils.server.impl;
 
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.util.Blob;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.util.Blob;
 
 /**
  * Helper for segmenting an input stream into a list of Data packets. Current
@@ -30,7 +31,7 @@ import net.named_data.jndn.util.Blob;
  * several assumptions: NDN packet size was limited to 8000 at the time this was
  * written and signature size is unknown.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedServerHelper {
 

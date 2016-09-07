@@ -24,7 +24,7 @@ import net.named_data.jndn.OnTimeout;
  *
  * TODO merge with Observable
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface DataStream extends OnData, OnTimeout, OnComplete, OnException {
 

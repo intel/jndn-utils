@@ -74,9 +74,11 @@ class NdnSubscriber implements Subscriber {
     if (newAnnouncementCancellation != null) {
       newAnnouncementCancellation.cancel();
     }
+
     if (existingAnnouncementsCancellation != null) {
       existingAnnouncementsCancellation.cancel();
     }
+
     for (Context c : known) {
       c.cancel();
     }

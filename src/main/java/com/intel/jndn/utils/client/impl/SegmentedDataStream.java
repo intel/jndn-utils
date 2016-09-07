@@ -13,9 +13,16 @@
  */
 package com.intel.jndn.utils.client.impl;
 
+import com.intel.jndn.utils.client.DataStream;
 import com.intel.jndn.utils.client.OnComplete;
 import com.intel.jndn.utils.client.OnException;
-import com.intel.jndn.utils.client.DataStream;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnTimeout;
+import net.named_data.jndn.encoding.EncodingException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,12 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnTimeout;
-import net.named_data.jndn.encoding.EncodingException;
 
 /**
  * As packets are received, they are mapped by their last component's segment
@@ -40,7 +41,7 @@ import net.named_data.jndn.encoding.EncodingException;
  * data is received; if data is received out of order, the callbacks will not be
  * fired until adjoining packets are received.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedDataStream implements DataStream {
 

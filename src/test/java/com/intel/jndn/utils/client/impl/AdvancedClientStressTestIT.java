@@ -16,15 +16,6 @@ package com.intel.jndn.utils.client.impl;
 import com.intel.jndn.utils.Client;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.server.impl.SegmentedServerHelper;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -34,11 +25,21 @@ import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.security.SecurityException;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * Test AdvancedClient.java; requires a hostname to an NFD accepting a generated
  * key to register prefixes, e.g. mvn test -Dnfd.ip=10.10.10.1
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class AdvancedClientStressTestIT {
 

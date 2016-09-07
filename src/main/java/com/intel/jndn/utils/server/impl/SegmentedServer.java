@@ -13,17 +13,9 @@
  */
 package com.intel.jndn.utils.server.impl;
 
-import com.intel.jndn.utils.server.RepositoryServer;
-import com.intel.jndn.utils.repository.impl.ForLoopRepository;
 import com.intel.jndn.utils.Repository;
-import com.intel.jndn.utils.server.impl.SegmentedServerHelper;
-import com.intel.jndn.utils.server.impl.ServerBaseImpl;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.intel.jndn.utils.repository.impl.ForLoopRepository;
+import com.intel.jndn.utils.server.RepositoryServer;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -31,11 +23,18 @@ import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Implementation of a {@link RepositoryServer} that segments packets stored in
  * its repository.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedServer extends ServerBaseImpl implements RepositoryServer {
 

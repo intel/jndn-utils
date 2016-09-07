@@ -17,7 +17,7 @@ package com.intel.jndn.utils.client;
  * Callback fired when an activity throws an exception; this is necessary because
  * some actions are performed asynchronously (e.g. in a thread pool) and exceptions
  * could otherwise be lost.
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface OnException {
 
@@ -25,5 +25,5 @@ public interface OnException {
    * Called when an activity throws an exception
    * @param exception the exception thrown
    */
-  public void onException(Exception exception);
+  void onException(Exception exception);
 }

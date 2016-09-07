@@ -14,20 +14,22 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.TestHelper;
-import java.util.ArrayList;
-import java.util.stream.IntStream;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.Name.Component;
 import net.named_data.jndn.encoding.EncodingException;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.stream.IntStream;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
 
 /**
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedDataStreamTest {
 

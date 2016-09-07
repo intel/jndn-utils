@@ -21,7 +21,7 @@ import net.named_data.jndn.util.Blob;
 /**
  * Helper methods for testing.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class RepoHelper {
 

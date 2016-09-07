@@ -13,18 +13,18 @@
  */
 package com.intel.jndn.utils.client.impl;
 
-import com.intel.jndn.utils.client.SegmentedClient;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.util.Blob;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * Internal class for assembling a list of {@link Data} packets into one large
  * data packet; this implementation will use all properties of the first packet
  * in the list and concatenate the content bytes of all packets in order.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 class DataAssembler {
 

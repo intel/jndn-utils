@@ -15,11 +15,6 @@ package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.utils.ProcessingStage;
 import com.intel.jndn.utils.Server;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
@@ -27,10 +22,16 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.encoding.EncodingException;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Base implementation for a {@link Server}.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public abstract class ServerBaseImpl implements Server {
 

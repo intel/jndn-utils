@@ -14,27 +14,27 @@
 package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.mock.MeasurableFace;
-import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.server.RespondWithBlob;
 import com.intel.jndn.utils.server.RespondWithData;
-import java.io.IOException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
-import static org.junit.Assert.*;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test {@link SimpleServer}
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SimpleServerTest {
 

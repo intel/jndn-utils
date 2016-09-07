@@ -13,18 +13,20 @@
  */
 package com.intel.jndn.utils.server.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Name;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test the SegmentedServerHelper
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedServerHelperTest {
 
