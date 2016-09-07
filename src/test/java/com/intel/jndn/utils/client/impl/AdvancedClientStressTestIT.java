@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -15,7 +15,7 @@ package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.Client;
 import com.intel.jndn.utils.TestHelper;
-import com.intel.jndn.utils.server.impl.SegmentedServerHelper;
+import com.intel.jndn.utils.impl.SegmentationHelper;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -107,7 +107,7 @@ public class AdvancedClientStressTestIT {
       data.getMetaInfo().setFreshnessPeriod(0);
 
       try {
-        for (Data segment : SegmentedServerHelper.segment(data, bytes, segmentSize)) {
+        for (Data segment : SegmentationHelper.segment(data, bytes, segmentSize)) {
           logger.log(Level.INFO, "Put data: " + segment.getName().toUri());
           face.putData(segment);
         }

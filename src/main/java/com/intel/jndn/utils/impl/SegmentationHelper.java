@@ -16,6 +16,7 @@ package com.intel.jndn.utils.impl;
 
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 
 import java.io.ByteArrayOutputStream;
@@ -26,24 +27,68 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Helper for segmenting an input stream into a list of Data packets. Current
- * use of the default segment size of 4096 (only for
- * {@link #segment(net.named_data.jndn.Data, java.io.InputStream)} is based on
- * several assumptions: NDN packet size was limited to 8000 at the time this was
- * written and signature size is unknown.
+ * Helper methods for reading and writing segmented NDN packets. See <a
+ * href="http://named-data.net/doc/tech-memos/naming-conventions.pdf">NDN Naming Conventions</a> for information used
+ * in this class
+ * <p>
+ * For segmentation of streams: the current use of the default segment size of 4096
+ * (only for {@link #segment(net.named_data.jndn.Data, java.io.InputStream)} is based on several assumptions: NDN packet
+ * size was limited to 8000 at the time this was written and the signature size is unknown.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class SegmentedServerHelper {
+public class SegmentationHelper {
 
   public static final int DEFAULT_SEGMENT_SIZE = 4096;
+  private static final byte NDN_SEGMENT_MARKER = 0x00;
+
+  private SegmentationHelper() {
+    // do not instantiate this class
+  }
+
+  /**
+   * Determine if a name is segmented, i.e. if it ends with the correct marker type.
+   *
+   * @param name the name of a packet
+   * @param marker the marker type (the initial byte of the component)
+   * @return true if the name is segmented
+   */
+  public static boolean isSegmented(Name name, byte marker) {
+    return name.size() > 0 && name.get(-1).getValue().buf().get(0) == marker;
+  }
+
+  /**
+   * Retrieve the segment number from the last component of a name.
+   *
+   * @param name the name of a packet
+   * @param marker the marker type (the initial byte of the component)
+   * @return the segment number
+   * @throws EncodingException if the name does not have a final component of the correct marker type
+   */
+  public static long parseSegment(Name name, byte marker) throws EncodingException {
+    if (name.size() == 0) {
+      throw new EncodingException("No components to parse.");
+    }
+    return name.get(-1).toNumberWithMarker(marker);
+  }
+
+  /**
+   * Remove a segment component from the end of a name
+   *
+   * @param name the name of a packet
+   * @param marker the marker type (the initial byte of the component)
+   * @return the new name with the segment component removed or a copy of the name if no segment component was present
+   */
+  public static Name removeSegment(Name name, byte marker) {
+    return isSegmented(name, marker) ? name.getPrefix(-1) : new Name(name);
+  }
 
   /**
    * Segment a stream of bytes into a list of Data packets; this must read all
    * the bytes first in order to determine the end segment for FinalBlockId.
    *
-   * @param template the {@link Data} packet to use for the segment {@link Name},
-   * {@link net.named_data.jndn.MetaInfo}, etc.
+   * @param template the {@link Data} packet to use for the segment {@link Name}, {@link net.named_data.jndn.MetaInfo},
+   * etc.
    * @param bytes an {@link InputStream} to the bytes to segment
    * @return a list of segmented {@link Data} packets
    * @throws IOException if the stream fails
@@ -56,19 +101,19 @@ public class SegmentedServerHelper {
    * Segment a stream of bytes into a list of Data packets; this must read all
    * the bytes first in order to determine the end segment for FinalBlockId.
    *
-   * @param template the {@link Data} packet to use for the segment {@link Name},
-   * {@link net.named_data.jndn.MetaInfo}, etc.
+   * @param template the {@link Data} packet to use for the segment {@link Name}, {@link net.named_data.jndn.MetaInfo},
+   * etc.
    * @param bytes an {@link InputStream} to the bytes to segment
    * @return a list of segmented {@link Data} packets
    * @throws IOException if the stream fails
    */
   public static List<Data> segment(Data template, InputStream bytes, int segmentSize) throws IOException {
     List<Data> segments = new ArrayList<>();
-    byte[] buffer_ = readAll(bytes);
-    int numBytes = buffer_.length;
+    byte[] readBytes = readAll(bytes);
+    int numBytes = readBytes.length;
     int numPackets = (int) Math.ceil((double) numBytes / segmentSize);
-    ByteBuffer buffer = ByteBuffer.wrap(buffer_, 0, numBytes);
-    Name.Component lastSegment = Name.Component.fromNumberWithMarker(numPackets - 1, 0x00);
+    ByteBuffer buffer = ByteBuffer.wrap(readBytes, 0, numBytes);
+    Name.Component lastSegment = Name.Component.fromNumberWithMarker((long) numPackets - 1, NDN_SEGMENT_MARKER);
 
     for (int i = 0; i < numPackets; i++) {
       Data segment = new Data(template);

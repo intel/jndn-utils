@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -14,6 +14,7 @@
 package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.utils.Repository;
+import com.intel.jndn.utils.impl.SegmentationHelper;
 import com.intel.jndn.utils.repository.impl.ForLoopRepository;
 import com.intel.jndn.utils.server.RepositoryServer;
 import net.named_data.jndn.Data;
@@ -57,9 +58,9 @@ public class SegmentedServer extends ServerBaseImpl implements RepositoryServer 
       register();
     }
 
-    if (data.getContent().size() >= SegmentedServerHelper.DEFAULT_SEGMENT_SIZE) {
+    if (data.getContent().size() >= SegmentationHelper.DEFAULT_SEGMENT_SIZE) {
       InputStream stream = new ByteArrayInputStream(data.getContent().getImmutableArray());
-      List<Data> segments = SegmentedServerHelper.segment(data, stream);
+      List<Data> segments = SegmentationHelper.segment(data, stream);
       for (Data segment : segments) {
         logger.fine("Adding segment: " + segment.getName().toUri());
         repository.put(segment);

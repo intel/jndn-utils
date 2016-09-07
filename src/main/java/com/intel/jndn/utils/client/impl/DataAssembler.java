@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -13,6 +13,7 @@
  */
 package com.intel.jndn.utils.client.impl;
 
+import com.intel.jndn.utils.impl.SegmentationHelper;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.util.Blob;
 
