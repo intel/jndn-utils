@@ -23,12 +23,12 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author Andrew Brown, andrew.brown@intel.com
@@ -39,7 +39,7 @@ class NdnSubscriber implements Subscriber {
   private final Name prefix;
   private final AnnouncementService announcementService;
   private final Client client;
-  private final Set<Context> known = new HashSet<>();
+  private final Map<Long, Context> known = new HashMap<>();
   private Cancellation newAnnouncementCancellation;
   private Cancellation existingAnnouncementsCancellation;
   private volatile boolean started = false;
@@ -54,21 +54,26 @@ class NdnSubscriber implements Subscriber {
   private void start() throws RegistrationFailureException {
     LOGGER.log(Level.INFO, "Starting subscriber");
 
-    existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::add, null, e -> stop());
-    newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::add, this::remove, e -> stop());
+    existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::add, null, e -> close());
+    newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::add, this::remove, e -> close());
 
     started = true;
   }
 
   private void add(long publisherId) {
-    known.add(new Context(publisherId));
+    if (known.containsKey(publisherId)) {
+      LOGGER.log(Level.WARNING, "Duplicate publisher ID {} received from announcement service; this should not happen and will be ignored", publisherId);
+    } else {
+      known.put(publisherId, new Context(publisherId));
+    }
   }
 
   private void remove(long publisherId) {
-    known.remove(publisherId); // TODO incorrect
+    known.remove(publisherId);
   }
 
-  private void stop() {
+  @Override
+  public void close() {
     LOGGER.log(Level.INFO, "Stopping subscriber, knows of {0} publishers: {1} ", new Object[]{known.size(), known});
 
     if (newAnnouncementCancellation != null) {
@@ -79,7 +84,7 @@ class NdnSubscriber implements Subscriber {
       existingAnnouncementsCancellation.cancel();
     }
 
-    for (Context c : known) {
+    for (Context c : known.values()) {
       c.cancel();
     }
 
@@ -87,7 +92,7 @@ class NdnSubscriber implements Subscriber {
   }
 
   Set<Long> knownPublishers() {
-    return known.stream().map(c -> c.publisherId).collect(Collectors.toSet());
+    return known.keySet();
   }
 
   // TODO repeated calls?
@@ -103,11 +108,11 @@ class NdnSubscriber implements Subscriber {
       }
     }
 
-    for (Context c : known) {
+    for (Context c : known.values()) {
       c.subscribe(onMessage, onError);
     }
 
-    return this::stop;
+    return this::close;
   }
 
   private class Context implements Cancellation {
@@ -180,8 +185,12 @@ class NdnSubscriber implements Subscriber {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       Context context = (Context) o;
       return publisherId == context.publisherId;
     }

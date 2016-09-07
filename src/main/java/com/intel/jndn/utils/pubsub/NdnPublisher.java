@@ -1,11 +1,11 @@
 /*
  * jndn-utils
  * Copyright (c) 2016, Intel Corporation.
- *  
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
  * version 3, as published by the Free Software Foundation.
- *  
+ *
  * This program is distributed in the hope it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
@@ -14,6 +14,7 @@
 
 package com.intel.jndn.utils.pubsub;
 
+import com.intel.jndn.utils.ContentStore;
 import com.intel.jndn.utils.Publisher;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -39,17 +40,17 @@ import java.util.logging.Logger;
  */
 class NdnPublisher implements Publisher, OnInterestCallback {
   private static final Logger LOGGER = Logger.getLogger(NdnPublisher.class.getName());
-  private final Face face; // TODO only needed in start, remove?
-  private final Name prefix; // TODO only needed in start, remove?
+  private final Face face;
+  private final Name prefix;
   private final AnnouncementService announcementService;
   private final PendingInterestTable pendingInterestTable;
-  private final ContentStore<Blob> contentStore;
+  private final ContentStore contentStore;
   private final long publisherId;
   private volatile long latestMessageId = 0;
   private long registrationId;
-  // TODO need pit
+  private boolean started = false;
 
-  NdnPublisher(Face face, Name prefix, long publisherId, AnnouncementService announcementService, PendingInterestTable pendingInterestTable, ContentStore<Blob> contentStore) {
+  NdnPublisher(Face face, Name prefix, long publisherId, AnnouncementService announcementService, PendingInterestTable pendingInterestTable, ContentStore contentStore) {
     this.face = face;
     this.prefix = prefix;
     this.publisherId = publisherId;
@@ -58,7 +59,8 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     this.contentStore = contentStore;
   }
 
-  public void start() throws RegistrationFailureException {
+  void start() throws RegistrationFailureException {
+    started = true;
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
 
@@ -71,7 +73,8 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     }
   }
 
-  public void stop() throws IOException {
+  @Override
+  public void close() throws IOException {
     face.removeRegisteredPrefix(registrationId);
     contentStore.clear();
     announcementService.announceExit(publisherId);
@@ -79,18 +82,26 @@ class NdnPublisher implements Publisher, OnInterestCallback {
 
   // TODO should throw IOException?
   @Override
-  public void publish(Blob message) {
+  public void publish(Blob message) throws IOException {
+    if (!started) {
+      try {
+        start();
+      } catch (RegistrationFailureException e) {
+        throw new IOException(e);
+      }
+    }
+
     long id = latestMessageId++; // TODO synchronize?
     Name name = PubSubNamespace.toMessageName(prefix, publisherId, id);
 
     contentStore.put(name, message);
     LOGGER.log(Level.INFO, "Published message {0} to content store", id);
 
-    if(pendingInterestTable.has(new Interest(name))){
+    if (pendingInterestTable.has(new Interest(name))) {
       try {
         contentStore.push(face, name);
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "Failed to send message {0} for pending interests: {1}", new Object[]{id, name});
+        LOGGER.log(Level.SEVERE, "Failed to send message {0} for pending interests: {1}", new Object[]{id, name, e});
       }
     }
   }
@@ -98,7 +109,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
   @Override
   public void onInterest(Name name, Interest interest, Face face, long registrationId, InterestFilter interestFilter) {
     try {
-      if(contentStore.has(interest.getName())){
+      if (contentStore.has(interest.getName())) {
         contentStore.push(face, interest.getName());
       } else {
         pendingInterestTable.add(interest);
@@ -116,5 +127,4 @@ class NdnPublisher implements Publisher, OnInterestCallback {
       LOGGER.log(Level.SEVERE, "Failed to decode message ID for interest: " + interest.toUri(), e);
     }
   }
-
 }

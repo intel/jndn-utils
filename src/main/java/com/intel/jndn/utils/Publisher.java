@@ -16,9 +16,15 @@ package com.intel.jndn.utils;
 
 import net.named_data.jndn.util.Blob;
 
+import java.io.IOException;
+
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public interface Publisher {
-  void publish(Blob message);
+public interface Publisher extends AutoCloseable {
+  /**
+   * @param message a binary blob to publish to a topic
+   * @throws IOException if the publication fails
+   */
+  void publish(Blob message) throws IOException;
 }

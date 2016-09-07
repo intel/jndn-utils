@@ -20,6 +20,8 @@ import com.intel.jndn.utils.client.impl.AdvancedClient;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 
+import java.util.Random;
+
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
@@ -41,6 +43,6 @@ public final class Topic {
 
   // TODO move to PubSubFactory?
   public Publisher newPublisher(Face face) {
-    return new NdnPublisher(face, name, 23, new NdnAnnouncementService(face, name), new ForLoopPendingInterestTable(), new BlobContentStore());
+    return new NdnPublisher(face, name, new Random().nextLong(), new NdnAnnouncementService(face, name), new ForLoopPendingInterestTable(), new BlobContentStore(1024));
   }
 }

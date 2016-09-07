@@ -21,6 +21,11 @@ import net.named_data.jndn.util.Blob;
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public interface Subscriber {
+public interface Subscriber extends AutoCloseable {
+  /**
+   * @param onMessage called every time a new message is received
+   * @param onError called every time an error occurs
+   * @return a cancellation token for stopping the subscription
+   */
   Cancellation subscribe(On<Blob> onMessage, On<Exception> onError);
 }
