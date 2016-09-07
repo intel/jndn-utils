@@ -56,22 +56,23 @@ class NdnAnnouncementService implements AnnouncementService {
 
   @Override
   public void announceEntrance(long id) throws IOException {
-    Name.Component publisherId = Name.Component.fromNumberWithMarker(id, PubSubNamespace.PUBLISHER_ID_MARKER);
-    Name.Component announcementAction = Name.Component.fromNumberWithMarker(PubSubNamespace.ANNOUNCEMENT_ENTRANCE, PubSubNamespace.ANNOUNCEMENT_ACTION_MARKER);
-    Interest interest = new Interest(new Name(broadcastPrefix).append(topicPrefix).append(publisherId).append(announcementAction));
+    LOGGER.log(Level.INFO, "Announcing publisher entrance: {0} to {1}", new Object[]{id, topicPrefix});
+    Name name = PubSubNamespace.toAnnouncement(new Name(broadcastPrefix).append(topicPrefix), id, PubSubNamespace.Announcement.ENTRANCE);
+    Interest interest = new Interest(name);
     face.expressInterest(interest, null);
   }
 
   @Override
   public void announceExit(long id) throws IOException {
-    Name.Component publisherId = Name.Component.fromNumberWithMarker(id, PubSubNamespace.PUBLISHER_ID_MARKER);
-    Name.Component announcementAction = Name.Component.fromNumberWithMarker(PubSubNamespace.ANNOUNCEMENT_EXIT, PubSubNamespace.ANNOUNCEMENT_ACTION_MARKER);
-    Interest interest = new Interest(new Name(broadcastPrefix).append(topicPrefix).append(publisherId).append(announcementAction));
+    LOGGER.log(Level.INFO, "Announcing publisher exit: {0} from {1}", new Object[]{id, topicPrefix});
+    Name name = PubSubNamespace.toAnnouncement(new Name(broadcastPrefix).append(topicPrefix), id, PubSubNamespace.Announcement.EXIT);
+    Interest interest = new Interest(name);
     face.expressInterest(interest, null);
   }
 
   @Override
   public Cancellation discoverExistingAnnouncements(On<Long> onFound, On<Void> onComplete, On<Exception> onError) {
+    LOGGER.log(Level.INFO, "Discover existing publishers: {0}", topicPrefix);
     if (onFound == null) {
       return CANCELLED;
     }
@@ -100,6 +101,7 @@ class NdnAnnouncementService implements AnnouncementService {
 
   @Override
   public Cancellation observeNewAnnouncements(On<Long> onAdded, On<Long> onRemoved, On<Exception> onError) throws RegistrationFailureException {
+    LOGGER.log(Level.INFO, "Observing new announcements: {0}", topicPrefix);
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
     OnAnnouncement onAnnouncement = new OnAnnouncement(onAdded, onRemoved, onError);
@@ -127,12 +129,12 @@ class NdnAnnouncementService implements AnnouncementService {
     public void onInterest(Name name, Interest interest, Face face, long l, InterestFilter interestFilter) {
       try {
         long publisherId = interest.getName().get(-2).toNumberWithMarker(PubSubNamespace.PUBLISHER_ID_MARKER);
-        int announcement = (int) interest.getName().get(-1).toNumberWithMarker(PubSubNamespace.ANNOUNCEMENT_ACTION_MARKER);
+        PubSubNamespace.Announcement announcement = PubSubNamespace.parseAnnouncement(interest.getName());
         switch (announcement) {
-          case PubSubNamespace.ANNOUNCEMENT_ENTRANCE:
+          case ENTRANCE:
             add(publisherId);
             break;
-          case PubSubNamespace.ANNOUNCEMENT_EXIT:
+          case EXIT:
             remove(publisherId);
             break;
           default:

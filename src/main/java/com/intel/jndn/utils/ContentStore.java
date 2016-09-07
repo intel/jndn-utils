@@ -51,7 +51,8 @@ public interface ContentStore {
   Blob get(Name name);
 
   /**
-   * Write the data under a given name to the face
+   * Write the stored content to the face as Data packets. If no content exists for the given name, this method should
+   * have no effect.
    *
    * @param face the face to write to
    * @param name the name of the data to write

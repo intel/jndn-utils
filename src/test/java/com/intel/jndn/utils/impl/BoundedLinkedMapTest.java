@@ -12,7 +12,7 @@
  * more details.
  */
 
-package com.intel.jndn.utils.pubsub;
+package com.intel.jndn.utils.impl;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -37,9 +37,11 @@ class NdnSubscriber implements Subscriber {
   private static final Logger LOGGER = Logger.getLogger(NdnSubscriber.class.getName());
   private final Face face;
   private final Name prefix;
+  private final On<Blob> onMessage = null;
+  private final On<Exception> onError = null;
   private final AnnouncementService announcementService;
   private final Client client;
-  private final Map<Long, Context> known = new HashMap<>();
+  private final Map<Long, Subscription> subscriptions = new HashMap<>();
   private Cancellation newAnnouncementCancellation;
   private Cancellation existingAnnouncementsCancellation;
   private volatile boolean started = false;
@@ -51,8 +53,8 @@ class NdnSubscriber implements Subscriber {
     this.client = client;
   }
 
-  private void start() throws RegistrationFailureException {
-    LOGGER.log(Level.INFO, "Starting subscriber");
+  void open() throws RegistrationFailureException {
+    LOGGER.log(Level.INFO, "Starting subscriber: {0}", prefix);
 
     existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::add, null, e -> close());
     newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::add, this::remove, e -> close());
@@ -60,21 +62,24 @@ class NdnSubscriber implements Subscriber {
     started = true;
   }
 
-  private void add(long publisherId) {
-    if (known.containsKey(publisherId)) {
+  void add(long publisherId) {
+    if (subscriptions.containsKey(publisherId)) {
       LOGGER.log(Level.WARNING, "Duplicate publisher ID {} received from announcement service; this should not happen and will be ignored", publisherId);
     } else {
-      known.put(publisherId, new Context(publisherId));
+      Subscription subscription = new Subscription(publisherId);
+      subscriptions.put(publisherId, subscription);
+      subscription.subscribe();
     }
   }
 
-  private void remove(long publisherId) {
-    known.remove(publisherId);
+  void remove(long publisherId) {
+    Subscription removed = subscriptions.remove(publisherId);
+    removed.cancel();
   }
 
   @Override
   public void close() {
-    LOGGER.log(Level.INFO, "Stopping subscriber, knows of {0} publishers: {1} ", new Object[]{known.size(), known});
+    LOGGER.log(Level.INFO, "Stopping subscriber, knows of {0} publishers: {1} ", new Object[]{subscriptions.size(), subscriptions});
 
     if (newAnnouncementCancellation != null) {
       newAnnouncementCancellation.cancel();
@@ -84,7 +89,7 @@ class NdnSubscriber implements Subscriber {
       existingAnnouncementsCancellation.cancel();
     }
 
-    for (Context c : known.values()) {
+    for (Subscription c : subscriptions.values()) {
       c.cancel();
     }
 
@@ -92,15 +97,16 @@ class NdnSubscriber implements Subscriber {
   }
 
   Set<Long> knownPublishers() {
-    return known.keySet();
+    return subscriptions.keySet();
   }
 
   // TODO repeated calls?
+  // TODO remove this, do topic.subscribe(On..., On...) instead; or new Subscriber(On..., On..., ...).open()
   @Override
   public Cancellation subscribe(On<Blob> onMessage, On<Exception> onError) {
     if (!started) {
       try {
-        start();
+        open();
       } catch (RegistrationFailureException e) {
         LOGGER.log(Level.SEVERE, "Failed to start announcement service, aborting subscription", e);
         onError.on(e);
@@ -108,29 +114,25 @@ class NdnSubscriber implements Subscriber {
       }
     }
 
-    for (Context c : known.values()) {
-      c.subscribe(onMessage, onError);
+    LOGGER.log(Level.INFO, "Subscribing: {0}", prefix);
+    for (Subscription c : subscriptions.values()) {
+      c.subscribe();
     }
 
     return this::close;
   }
 
-  private class Context implements Cancellation {
+  private class Subscription implements Cancellation {
     final long publisherId;
     long messageId;
     boolean subscribed = false;
-    On<Blob> onMessage;
-    On<Exception> onError;
     CompletableFuture<Data> currentRequest;
 
-    Context(long publisherId) {
+    Subscription(long publisherId) {
       this.publisherId = publisherId;
     }
 
-    synchronized void subscribe(On<Blob> onMessage, On<Exception> onError) {
-      this.onMessage = onMessage;
-      this.onError = onError;
-
+    synchronized void subscribe() {
       if (subscribed) {
         return;
       }
@@ -191,8 +193,8 @@ class NdnSubscriber implements Subscriber {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      Context context = (Context) o;
-      return publisherId == context.publisherId;
+      Subscription subscription = (Subscription) o;
+      return publisherId == subscription.publisherId;
     }
 
     @Override
@@ -202,7 +204,7 @@ class NdnSubscriber implements Subscriber {
 
     @Override
     public String toString() {
-      return "Context{" + "publisherId=" + publisherId + '}';
+      return "Subscription{" + "publisherId=" + publisherId + '}';
     }
   }
 }

@@ -17,6 +17,8 @@ package com.intel.jndn.utils.pubsub;
 import com.intel.jndn.utils.Publisher;
 import com.intel.jndn.utils.Subscriber;
 import com.intel.jndn.utils.client.impl.AdvancedClient;
+import com.intel.jndn.utils.impl.BoundedInMemoryContentStore;
+import com.intel.jndn.utils.impl.BoundedInMemoryPendingInterestTable;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 
@@ -36,13 +38,13 @@ public final class Topic {
     return new Name(name);
   }
 
-  // TODO move to PubSubFactory?
+  // TODO move to PubSubFactory? change this to subscribe()
   public Subscriber newSubscriber(Face face) {
     return new NdnSubscriber(face, name, new NdnAnnouncementService(face, name), new AdvancedClient());
   }
 
-  // TODO move to PubSubFactory?
+  // TODO move to PubSubFactory? change this to publish()
   public Publisher newPublisher(Face face) {
-    return new NdnPublisher(face, name, new Random().nextLong(), new NdnAnnouncementService(face, name), new ForLoopPendingInterestTable(), new BlobContentStore(1024));
+    return new NdnPublisher(face, name, new Random().nextLong(), new NdnAnnouncementService(face, name), new BoundedInMemoryPendingInterestTable(1024), new BoundedInMemoryContentStore(1024, 2000));
   }
 }

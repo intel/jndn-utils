@@ -98,8 +98,8 @@ public class SegmentationHelper {
   }
 
   /**
-   * Segment a stream of bytes into a list of Data packets; this must read all
-   * the bytes first in order to determine the end segment for FinalBlockId.
+   * Segment a stream of bytes into a list of Data packets; this must read all the bytes first in order to determine the
+   * end segment for FinalBlockId. TODO this could be smarter and only add segments if necessary
    *
    * @param template the {@link Data} packet to use for the segment {@link Name}, {@link net.named_data.jndn.MetaInfo},
    * etc.

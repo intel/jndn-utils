@@ -12,21 +12,25 @@
  * more details.
  */
 
-package com.intel.jndn.utils.pubsub;
+package com.intel.jndn.utils.impl;
 
+import com.intel.jndn.utils.pubsub.PendingInterestTable;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class ForLoopPendingInterestTable implements PendingInterestTable {
-  Map<Name, Interest> table = new ConcurrentHashMap<>();
+public class BoundedInMemoryPendingInterestTable implements PendingInterestTable {
+  //private static final Logger LOGGER = Logger.getLogger(BoundedInMemoryPendingInterestTable.class.getName());
+  private final BoundedLinkedMap<Name, Interest> table;
+
+  public BoundedInMemoryPendingInterestTable(int maxSize) {
+    this.table = new BoundedLinkedMap<>(maxSize);
+  }
 
   @Override
   public void add(Interest interest) {
@@ -35,8 +39,16 @@ public class ForLoopPendingInterestTable implements PendingInterestTable {
 
   @Override
   public boolean has(Interest interest) {
-    // TODO must handle more complex logic (selectors)
-    return has(interest.getName());
+    if (interest.getChildSelector() != -1) {
+      for (Name name : table.keySet()) {
+        if (interest.matchesName(name)) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return has(interest.getName());
+    }
   }
 
   public boolean has(Name name) {
@@ -45,7 +57,6 @@ public class ForLoopPendingInterestTable implements PendingInterestTable {
 
   @Override
   public Collection<Interest> extract(Name name) {
-    // TODO more complexity to return multiple results
-    return has(name) ? Collections.singleton(table.get(name)) : Collections.emptyList();
+    return table.values().stream().filter(i -> i.matchesName(name)).collect(Collectors.toList());
   }
 }

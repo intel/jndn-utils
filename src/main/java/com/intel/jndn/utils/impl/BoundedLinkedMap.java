@@ -12,7 +12,7 @@
  * more details.
  */
 
-package com.intel.jndn.utils.pubsub;
+package com.intel.jndn.utils.impl;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -106,7 +106,9 @@ public class BoundedLinkedMap<K, V> implements Map<K, V> {
   @Override
   public synchronized V remove(Object key) {
     V value = map.remove(key);
-    if (key == latest) latest = findLatest(map);
+    if (key == latest) {
+      latest = findLatest(map);
+    }
     return value;
   }
 
