@@ -35,15 +35,18 @@ class PubSubNamespace {
   static final int MESSAGE_ATTRIBUTES_MARKER = 101;
   static final int MESSAGE_CONTENT_MARKER = 102;
 
-  static final Name DEFAULT_BROADCAST_PREFIX = new Name("/bcast");
+  static final Name DEFAULT_BROADCAST_PREFIX = new Name("/ndn/broadcast");
 
   private PubSubNamespace() {
     // do not instantiate this class
   }
 
+  static Name.Component toPublisherComponent(long publisherId) {
+    return Name.Component.fromNumberWithMarker(publisherId, PubSubNamespace.PUBLISHER_ID_MARKER);
+  }
+
   static Name toPublisherName(Name prefix, long publisherId) {
-    Name.Component publisherComponent = Name.Component.fromNumberWithMarker(publisherId, PubSubNamespace.PUBLISHER_ID_MARKER);
-    return new Name(prefix).append(publisherComponent);
+    return new Name(prefix).append(toPublisherComponent(publisherId));
   }
 
   static Name toAnnouncement(Name prefix, long publisherId, Announcement announcement) {

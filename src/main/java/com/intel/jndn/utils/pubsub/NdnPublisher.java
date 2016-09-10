@@ -16,6 +16,7 @@ package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.utils.ContentStore;
 import com.intel.jndn.utils.Publisher;
+import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.InterestFilter;
@@ -39,6 +40,7 @@ import java.util.logging.Logger;
  */
 class NdnPublisher implements Publisher, OnInterestCallback {
   private static final Logger LOGGER = Logger.getLogger(NdnPublisher.class.getName());
+  private static final int ATTRIBUTES_FRESHNESS_PERIOD = 2000;
   private final Face face;
   private final Name prefix;
   private final AnnouncementService announcementService;
@@ -51,7 +53,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
 
   NdnPublisher(Face face, Name prefix, long publisherId, AnnouncementService announcementService, PendingInterestTable pendingInterestTable, ContentStore contentStore) {
     this.face = face;
-    this.prefix = prefix;
+    this.prefix = PubSubNamespace.toPublisherName(prefix, publisherId);
     this.publisherId = publisherId;
     this.announcementService = announcementService;
     this.pendingInterestTable = pendingInterestTable;
@@ -101,26 +103,53 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     LOGGER.log(Level.INFO, "Published message {0} to content store: {1}", new Object[]{id, name});
 
     if (pendingInterestTable.has(new Interest(name))) {
-      try {
-        contentStore.push(face, name);
-        // TODO extract satisfied interests
-      } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "Failed to send message {0} for pending interests: {1}", new Object[]{id, name, e});
-      }
+      sendContent(face, name);
+      // TODO extract satisfied interests
     }
   }
 
   @Override
   public void onInterest(Name name, Interest interest, Face face, long registrationId, InterestFilter interestFilter) {
     LOGGER.log(Level.INFO, "Client requesting message: {0}", interest.toUri());
-    try {
-      if (contentStore.has(interest.getName())) {
-        contentStore.push(face, interest.getName());
+    if (isAttributesRequest(name, interest)) {
+      sendAttributes(face, name);
+    } else {
+      if (contentStore.has(interest)) {
+        sendContent(face, interest);
       } else {
         pendingInterestTable.add(interest);
       }
+    }
+  }
+
+  private boolean isAttributesRequest(Name name, Interest interest) {
+    return name.equals(interest.getName()) && interest.getChildSelector() == -1;
+  }
+
+  private void sendContent(Face face, Name name) {
+    try {
+      contentStore.push(face, name);
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Failed to publish message for interest: " + interest.toUri(), e);
+      LOGGER.log(Level.SEVERE, "Failed to publish message, aborting: {0}", new Object[]{name, e});
+    }
+  }
+
+  private void sendContent(Face face, Interest interest) {
+    try {
+      contentStore.push(face, interest);
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "Failed to publish message, aborting: {0}", new Object[]{interest.getName(), e});
+    }
+  }
+
+  private void sendAttributes(Face face, Name publisherName) {
+    Data data = new Data(publisherName);
+    data.setContent(new Blob("[attributes here]"));
+    data.getMetaInfo().setFreshnessPeriod(ATTRIBUTES_FRESHNESS_PERIOD);
+    try {
+      face.putData(data);
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "Failed to publish attributes for publisher: " + publisherName, e);
     }
   }
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 interface AnnouncementService {
   void announceEntrance(long id) throws IOException;
   void announceExit(long id) throws IOException;
-  Cancellation discoverExistingAnnouncements(On<Long> onFound, On<Void> onComplete, On<Exception> onError);
+
+  Cancellation discoverExistingAnnouncements(On<Long> onFound, On<Void> onComplete, On<Exception> onError) throws IOException;
   Cancellation observeNewAnnouncements(On<Long> onAdded, On<Long> onRemoved, On<Exception> onError) throws RegistrationFailureException;
 }

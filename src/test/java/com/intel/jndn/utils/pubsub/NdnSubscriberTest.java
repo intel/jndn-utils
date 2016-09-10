@@ -40,7 +40,7 @@ public class NdnSubscriberTest {
     Face face = mock(Face.class);
     announcementService = mock(AnnouncementService.class);
     Client client = mock(Client.class);
-    instance = new NdnSubscriber(face, TOPIC_NAME, announcementService, client);
+    instance = new NdnSubscriber(face, TOPIC_NAME, null, null, announcementService, client);
   }
 
   @Test

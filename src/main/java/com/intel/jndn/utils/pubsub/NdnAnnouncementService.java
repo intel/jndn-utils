@@ -14,6 +14,8 @@
 
 package com.intel.jndn.utils.pubsub;
 
+import com.intel.jndn.utils.client.impl.BackoffRetryClient;
+import net.named_data.jndn.Exclude;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.InterestFilter;
@@ -37,17 +39,20 @@ import static com.intel.jndn.utils.pubsub.Cancellation.CANCELLED;
  */
 class NdnAnnouncementService implements AnnouncementService {
   private static final Logger LOGGER = Logger.getLogger(NdnAnnouncementService.class.getName());
+  private static final double STARTING_DISCOVERY_LIFETIME = 100.0;
+  private static final double MAX_DISCOVERY_LIFETIME = 45000.0;
   private final Face face;
-  private final Name broadcastPrefix;
   private final Name topicPrefix;
-  private final Name usablePrefix;
+  private final Name broadcastPrefix;
   private final Set<Long> known = new HashSet<>();
+  private BackoffRetryClient client;
+  private boolean stopped = false;
 
   private NdnAnnouncementService(Face face, Name broadcastPrefix, Name topicPrefix) {
     this.face = face;
-    this.broadcastPrefix = broadcastPrefix;
     this.topicPrefix = topicPrefix;
-    this.usablePrefix = new Name(broadcastPrefix).append(topicPrefix);
+    this.broadcastPrefix = new Name(broadcastPrefix).append(topicPrefix);
+    this.client = new BackoffRetryClient(MAX_DISCOVERY_LIFETIME, 2);
   }
 
   NdnAnnouncementService(Face face, Name topicPrefix) {
@@ -56,22 +61,22 @@ class NdnAnnouncementService implements AnnouncementService {
 
   @Override
   public void announceEntrance(long id) throws IOException {
-    LOGGER.log(Level.INFO, "Announcing publisher entrance: {0} to {1}", new Object[]{id, topicPrefix});
-    Name name = PubSubNamespace.toAnnouncement(new Name(broadcastPrefix).append(topicPrefix), id, PubSubNamespace.Announcement.ENTRANCE);
+    LOGGER.log(Level.INFO, "Announcing publisher entrance: {0} to {1}", new Object[]{id, broadcastPrefix});
+    Name name = PubSubNamespace.toAnnouncement(broadcastPrefix, id, PubSubNamespace.Announcement.ENTRANCE);
     Interest interest = new Interest(name);
     face.expressInterest(interest, null);
   }
 
   @Override
   public void announceExit(long id) throws IOException {
-    LOGGER.log(Level.INFO, "Announcing publisher exit: {0} from {1}", new Object[]{id, topicPrefix});
-    Name name = PubSubNamespace.toAnnouncement(new Name(broadcastPrefix).append(topicPrefix), id, PubSubNamespace.Announcement.EXIT);
+    LOGGER.log(Level.INFO, "Announcing publisher exit: {0} from {1}", new Object[]{id, broadcastPrefix});
+    Name name = PubSubNamespace.toAnnouncement(broadcastPrefix, id, PubSubNamespace.Announcement.EXIT);
     Interest interest = new Interest(name);
     face.expressInterest(interest, null);
   }
 
   @Override
-  public Cancellation discoverExistingAnnouncements(On<Long> onFound, On<Void> onComplete, On<Exception> onError) {
+  public Cancellation discoverExistingAnnouncements(On<Long> onFound, On<Void> onComplete, On<Exception> onError) throws IOException {
     LOGGER.log(Level.INFO, "Discover existing publishers: {0}", topicPrefix);
     if (onFound == null) {
       return CANCELLED;
@@ -82,32 +87,68 @@ class NdnAnnouncementService implements AnnouncementService {
       onFound.on(id);
     }
 
-    // TODO while !backoff interval maxed out, send out interests with excludes
-    Interest interest = new Interest();
+    discover(client, onFound, onComplete, onError);
+    return () -> stopped = true;
+  }
+
+  private Interest discover(BackoffRetryClient client, On<Long> onFound, On<Void> onComplete, On<Exception> onError) throws IOException {
+    Interest interest = new Interest(topicPrefix);
+    interest.setInterestLifetimeMilliseconds(STARTING_DISCOVERY_LIFETIME);
+    interest.setExclude(excludeKnownPublishers());
+    client.retry(face, interest, (interest1, data) -> {
+      if (stopped) {
+        return;
+      }
+
+      LOGGER.log(Level.INFO, "Received discovery data ({0} bytes): {1}", new Object[]{data.getContent().size(), data.getName()});
+      found(data.getName(), onFound, onError);
+
+      // TODO instead of inspecting name should look at content and examine for multiple publishers
+      try {
+        discover(client, onFound, onComplete, onError); // recursion
+      } catch (IOException e) {
+        LOGGER.log(Level.SEVERE, "Failed while discovering publishers, aborting: {0}", new Object[]{broadcastPrefix, e});
+        onError.on(e);
+        // TODO re-call discover here?
+      }
+    }, interest2 -> {
+      // TODO recall client here, we should never be done
+    });
+    return interest;
+  }
+
+  private Exclude excludeKnownPublishers() {
+    Exclude exclude = new Exclude();
+    for (long pid : known) {
+      exclude.appendComponent(PubSubNamespace.toPublisherComponent(pid));
+    }
+    return exclude;
+  }
+
+  private void found(Name publisherName, On<Long> onFound, On<Exception> onError) {
     try {
-      long pendingInterest = face.expressInterest(interest, (i, d) -> {
-      }, (i) -> {
-      });
-      return () -> face.removePendingInterest(pendingInterest);
-    } catch (IOException e) {
+      found(PubSubNamespace.parsePublisher(publisherName), onFound);
+    } catch (EncodingException e) {
+      LOGGER.log(Level.SEVERE, "Failed to parse new publisher name, ignoring: {0}", publisherName);
       onError.on(e);
-      return CANCELLED;
     }
   }
 
-  private void found(long publisherId) {
+  private void found(long publisherId, On<Long> onFound) {
+    LOGGER.log(Level.INFO, "Found new publisher: {0}", publisherId);
     known.add(publisherId);
+    onFound.on(publisherId);
   }
 
   @Override
   public Cancellation observeNewAnnouncements(On<Long> onAdded, On<Long> onRemoved, On<Exception> onError) throws RegistrationFailureException {
-    LOGGER.log(Level.INFO, "Observing new announcements: {0}", topicPrefix);
+    LOGGER.log(Level.INFO, "Observing new announcements: {0}", broadcastPrefix);
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
     OnAnnouncement onAnnouncement = new OnAnnouncement(onAdded, onRemoved, onError);
 
     try {
-      long registeredPrefix = face.registerPrefix(usablePrefix, onAnnouncement, (OnRegisterFailed) onRegistration, onRegistration);
+      long registeredPrefix = face.registerPrefix(broadcastPrefix, onAnnouncement, (OnRegisterFailed) onRegistration, onRegistration);
       return () -> face.removeRegisteredPrefix(registeredPrefix);
     } catch (IOException | SecurityException e) {
       throw new RegistrationFailureException(e);
@@ -127,8 +168,9 @@ class NdnAnnouncementService implements AnnouncementService {
 
     @Override
     public void onInterest(Name name, Interest interest, Face face, long l, InterestFilter interestFilter) {
+      LOGGER.log(Level.INFO, "Received announcement: {0}", interest.toUri());
       try {
-        long publisherId = interest.getName().get(-2).toNumberWithMarker(PubSubNamespace.PUBLISHER_ID_MARKER);
+        long publisherId = PubSubNamespace.parsePublisher(interest.getName());
         PubSubNamespace.Announcement announcement = PubSubNamespace.parseAnnouncement(interest.getName());
         switch (announcement) {
           case ENTRANCE:

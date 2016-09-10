@@ -23,6 +23,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,29 +38,27 @@ class NdnSubscriber implements Subscriber {
   private static final Logger LOGGER = Logger.getLogger(NdnSubscriber.class.getName());
   private final Face face;
   private final Name prefix;
-  private final On<Blob> onMessage = null;
-  private final On<Exception> onError = null;
+  private final On<Blob> onMessage;
+  private final On<Exception> onError;
   private final AnnouncementService announcementService;
   private final Client client;
   private final Map<Long, Subscription> subscriptions = new HashMap<>();
   private Cancellation newAnnouncementCancellation;
   private Cancellation existingAnnouncementsCancellation;
-  private volatile boolean started = false;
 
-  NdnSubscriber(Face face, Name prefix, AnnouncementService announcementService, Client client) {
+  NdnSubscriber(Face face, Name prefix, On<Blob> onMessage, On<Exception> onError, AnnouncementService announcementService, Client client) {
     this.face = face;
     this.prefix = prefix;
+    this.onMessage = onMessage;
+    this.onError = onError;
     this.announcementService = announcementService;
     this.client = client;
   }
 
-  void open() throws RegistrationFailureException {
+  void open() throws RegistrationFailureException, IOException {
     LOGGER.log(Level.INFO, "Starting subscriber: {0}", prefix);
-
     existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::add, null, e -> close());
     newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::add, this::remove, e -> close());
-
-    started = true;
   }
 
   void add(long publisherId) {
@@ -92,8 +91,6 @@ class NdnSubscriber implements Subscriber {
     for (Subscription c : subscriptions.values()) {
       c.cancel();
     }
-
-    started = false;
   }
 
   Set<Long> knownPublishers() {
@@ -104,28 +101,27 @@ class NdnSubscriber implements Subscriber {
   // TODO remove this, do topic.subscribe(On..., On...) instead; or new Subscriber(On..., On..., ...).open()
   @Override
   public Cancellation subscribe(On<Blob> onMessage, On<Exception> onError) {
-    if (!started) {
-      try {
-        open();
-      } catch (RegistrationFailureException e) {
-        LOGGER.log(Level.SEVERE, "Failed to start announcement service, aborting subscription", e);
-        onError.on(e);
-        return Cancellation.CANCELLED;
-      }
-    }
-
-    LOGGER.log(Level.INFO, "Subscribing: {0}", prefix);
-    for (Subscription c : subscriptions.values()) {
-      c.subscribe();
-    }
-
+//    if (!started) {
+//      try {
+//        open();
+//      } catch (RegistrationFailureException e) {
+//        LOGGER.log(Level.SEVERE, "Failed to start announcement service, aborting subscription", e);
+//        onError.on(e);
+//        return Cancellation.CANCELLED;
+//      }
+//    }
+//
+//    LOGGER.log(Level.INFO, "Subscribing: {0}", prefix);
+//    for (Subscription c : subscriptions.values()) {
+//      c.subscribe();
+//    }
+//
     return this::close;
   }
 
   private class Subscription implements Cancellation {
     final long publisherId;
     long messageId;
-    boolean subscribed = false;
     CompletableFuture<Data> currentRequest;
 
     Subscription(long publisherId) {
@@ -133,13 +129,9 @@ class NdnSubscriber implements Subscriber {
     }
 
     synchronized void subscribe() {
-      if (subscribed) {
-        return;
-      }
-
+      // would prefer this to be getAsync(on<>, on<>)?
       currentRequest = client.getAsync(face, buildLatestInterest(publisherId)); // TODO backoff
       currentRequest.handle(this::handleResponse);
-      subscribed = true;
     }
 
     @Override
@@ -169,8 +161,8 @@ class NdnSubscriber implements Subscriber {
     }
 
     private void next(long publisherId, long messageId) {
-      CompletableFuture<Data> nextRequest = client.getAsync(face, buildNextInterest(publisherId, messageId));
-      nextRequest.handle(this::handleResponse);
+      currentRequest = client.getAsync(face, buildNextInterest(publisherId, messageId));
+      currentRequest.handle(this::handleResponse);
     }
 
     private Interest buildLatestInterest(long publisherId) {

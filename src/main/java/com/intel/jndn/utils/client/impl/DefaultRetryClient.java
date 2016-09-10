@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -31,7 +31,7 @@ import java.util.logging.Logger;
  */
 public class DefaultRetryClient implements RetryClient {
 
-  private static final Logger logger = Logger.getLogger(DefaultRetryClient.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(DefaultRetryClient.class.getName());
   private final int numRetriesAllowed;
   private volatile int totalRetries = 0;
 
@@ -62,8 +62,8 @@ public class DefaultRetryClient implements RetryClient {
    * @param context the current request context
    * @throws IOException when the client cannot perform the necessary network IO
    */
-  synchronized private void retryInterest(RetryContext context) throws IOException {
-    logger.info("Retrying interest: " + context.interest.toUri());
+  private synchronized void retryInterest(RetryContext context) throws IOException {
+    LOGGER.info("Retrying interest: " + context.interest.toUri());
     context.face.expressInterest(context.interest, context, context);
     totalRetries++;
   }
@@ -71,7 +71,7 @@ public class DefaultRetryClient implements RetryClient {
   /**
    * @return the total number of retries logged by this client
    */
-  public int totalRetries() {
+  int totalRetries() {
     return totalRetries;
   }
 
@@ -81,20 +81,20 @@ public class DefaultRetryClient implements RetryClient {
    */
   private class RetryContext implements OnData, OnTimeout {
 
-    public final Face face;
-    public final Interest interest;
-    public final OnData applicationOnData;
-    public final OnTimeout applicationOnTimeout;
-    public int numFailures = 0;
+    final Face face;
+    final Interest interest;
+    final OnData applicationOnData;
+    final OnTimeout applicationOnTimeout;
+    int numFailures = 0;
 
-    public RetryContext(Face face, Interest interest, OnData applicationOnData, OnTimeout applicationOnTimeout) {
+    RetryContext(Face face, Interest interest, OnData applicationOnData, OnTimeout applicationOnTimeout) {
       this.face = face;
       this.interest = interest;
       this.applicationOnData = applicationOnData;
       this.applicationOnTimeout = applicationOnTimeout;
     }
 
-    public boolean shouldRetry() {
+    boolean shouldRetry() {
       return numFailures < numRetriesAllowed;
     }
 
@@ -106,7 +106,7 @@ public class DefaultRetryClient implements RetryClient {
     @Override
     public void onTimeout(Interest interest) {
       numFailures++;
-      logger.finest("Request failed, count " + numFailures + ": " + interest.toUri());
+      LOGGER.finest("Request failed, count " + numFailures + ": " + interest.toUri());
 
       if (shouldRetry()) {
         try {

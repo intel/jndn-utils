@@ -26,6 +26,7 @@ import net.named_data.jndn.transport.AsyncTcpTransport;
 import net.named_data.jndn.util.Blob;
 import org.junit.Test;
 
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,15 +49,14 @@ public class TopicTestIT {
     Topic topic = new Topic(new Name("/pub/sub/topic"));
     CountDownLatch latch = new CountDownLatch(3);
 
-    Subscriber subscriber = topic.newSubscriber(pubFace);
-    subscriber.subscribe(b -> latch.countDown(), e -> fail(e.getMessage()));
+    Subscriber subscriber = topic.subscribe(pubFace, b -> latch.countDown(), e -> fail(e.getMessage()));
 
     Publisher publisher = topic.newPublisher(subFace);
     publisher.publish(new Blob("."));
     publisher.publish(new Blob(".."));
     publisher.publish(new Blob("..."));
 
-    latch.await(2, TimeUnit.SECONDS);
+    latch.await(20, TimeUnit.MINUTES);
     assertEquals(0, latch.getCount());
   }
 
@@ -66,7 +66,7 @@ public class TopicTestIT {
     AsyncTcpTransport.ConnectionInfo connectionInfo = new AsyncTcpTransport.ConnectionInfo(hostName, 6363, true);
     ThreadPoolFace face = new ThreadPoolFace(pool, transport, connectionInfo);
 
-    KeyChain keyChain = MockKeyChain.configure(new Name("/topic/test/it"));
+    KeyChain keyChain = MockKeyChain.configure(new Name("/topic/test/it").appendVersion(new Random().nextLong()));
     face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
 
     return face;

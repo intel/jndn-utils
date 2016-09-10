@@ -15,10 +15,12 @@
 package com.intel.jndn.utils;
 
 import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * TODO merge with Repository
@@ -43,12 +45,28 @@ public interface ContentStore {
   boolean has(Name name);
 
   /**
+   * Check if the content exists
+   *
+   * @param interest a selector-enabled interest to search for content in the store
+   * @return true if the content exists
+   */
+  boolean has(Interest interest);
+
+  /**
    * Retrieve the content by name
    *
    * @param name the name of the content
-   * @return the content if it exists or null otherwise TODO throw instead? Optional?
+   * @return the content if it exists
    */
-  Blob get(Name name);
+  Optional<Blob> get(Name name);
+
+  /**
+   * Retrieve the content by name
+   *
+   * @param interest the name of the content
+   * @return the content if it exists
+   */
+  Optional<Blob> get(Interest interest);
 
   /**
    * Write the stored content to the face as Data packets. If no content exists for the given name, this method should
@@ -59,6 +77,16 @@ public interface ContentStore {
    * @throws IOException if the writing fails
    */
   void push(Face face, Name name) throws IOException;
+
+  /**
+   * Write the stored content to the face as Data packets. If no content exists for the given name, this method should
+   * have no effect.
+   *
+   * @param face the face to write to
+   * @param interest the interest identifying of the data to write
+   * @throws IOException if the writing fails
+   */
+  void push(Face face, Interest interest) throws IOException;
 
   /**
    * Remove all stored content

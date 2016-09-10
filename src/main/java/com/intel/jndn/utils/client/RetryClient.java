@@ -11,6 +11,7 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
  * more details.
  */
+
 package com.intel.jndn.utils.client;
 
 import net.named_data.jndn.Face;
@@ -21,7 +22,8 @@ import net.named_data.jndn.OnTimeout;
 import java.io.IOException;
 
 /**
- * Define a client that can retry {@link Interest} packets on timeout.
+ * Define a client that can retry {@link Interest} packets on timeout. TODO should return Cancellation so that users
+ * can stop the process
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

@@ -21,7 +21,9 @@ import com.intel.jndn.utils.impl.BoundedInMemoryContentStore;
 import com.intel.jndn.utils.impl.BoundedInMemoryPendingInterestTable;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.util.Blob;
 
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -39,12 +41,15 @@ public final class Topic {
   }
 
   // TODO move to PubSubFactory? change this to subscribe()
-  public Subscriber newSubscriber(Face face) {
-    return new NdnSubscriber(face, name, new NdnAnnouncementService(face, name), new AdvancedClient());
+  public Subscriber subscribe(Face face, On<Blob> onMessage, On<Exception> onError) throws RegistrationFailureException, IOException {
+    NdnSubscriber subscriber = new NdnSubscriber(face, name, onMessage, onError, new NdnAnnouncementService(face, name), new AdvancedClient());
+    subscriber.open();
+    return subscriber;
   }
 
   // TODO move to PubSubFactory? change this to publish()
   public Publisher newPublisher(Face face) {
-    return new NdnPublisher(face, name, new Random().nextLong(), new NdnAnnouncementService(face, name), new BoundedInMemoryPendingInterestTable(1024), new BoundedInMemoryContentStore(1024, 2000));
+    long publisherId = Math.abs(new Random().nextLong());
+    return new NdnPublisher(face, name, publisherId, new NdnAnnouncementService(face, name), new BoundedInMemoryPendingInterestTable(1024), new BoundedInMemoryContentStore(1024, 2000));
   }
 }

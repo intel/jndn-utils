@@ -19,13 +19,15 @@ import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class BoundedInMemoryPendingInterestTable implements PendingInterestTable {
-  //private static final Logger LOGGER = Logger.getLogger(BoundedInMemoryPendingInterestTable.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(BoundedInMemoryPendingInterestTable.class.getName());
   private final BoundedLinkedMap<Name, Interest> table;
 
   public BoundedInMemoryPendingInterestTable(int maxSize) {
@@ -34,6 +36,7 @@ public class BoundedInMemoryPendingInterestTable implements PendingInterestTable
 
   @Override
   public void add(Interest interest) {
+    LOGGER.log(Level.INFO, "Adding pending interest: {0}", interest.toUri());
     table.put(interest.getName(), interest);
   }
 
