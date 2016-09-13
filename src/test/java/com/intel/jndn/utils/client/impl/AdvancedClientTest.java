@@ -71,7 +71,7 @@ public class AdvancedClientTest {
 
     Face face = forwarder.connect();
     face.registerPrefix(name, new OnInterestCallback() {
-      private int max = 9;
+      private final int max = 9;
 
       @Override
       public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {

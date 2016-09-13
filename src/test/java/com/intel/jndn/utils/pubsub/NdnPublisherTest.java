@@ -152,7 +152,7 @@ public class NdnPublisherTest {
     return ((MeasurableFace) face).sentInterests().size();
   }
 
-  private void driveFace(Face face) throws InterruptedException {
+  private void driveFace(Face face) {
     ScheduledExecutorService pool = Executors.newSingleThreadScheduledExecutor();
     pool.schedule(() -> {
       try {

@@ -69,7 +69,7 @@ public class AdvancedClientStressTestIT {
     long startTime = System.currentTimeMillis();
     AdvancedClient client = new AdvancedClient();
     List<CompletableFuture<Data>> requests = expressInterests(client, consumer, PREFIX, NUM_MESSAGES);
-    List<Data> datas = requests.stream().map((f) -> TestHelper.retrieve(f)).collect(Collectors.toList());
+    requests.stream().map((f) -> TestHelper.retrieve(f)).collect(Collectors.toList());
     long endTime = System.currentTimeMillis();
 
     logger.info(String.format("Transfered %d bytes in %d ms", MESSAGE_SIZE_BYTES * NUM_MESSAGES, endTime - startTime));

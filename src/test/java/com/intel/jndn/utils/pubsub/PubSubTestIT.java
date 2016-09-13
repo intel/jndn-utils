@@ -16,7 +16,6 @@ package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.mock.MockKeyChain;
 import com.intel.jndn.utils.Publisher;
-import com.intel.jndn.utils.Subscriber;
 import com.intel.jndn.utils.Topic;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;

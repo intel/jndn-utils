@@ -38,8 +38,8 @@ import static org.junit.Assert.assertNotNull;
  */
 public class SimpleServerTest {
 
-  Face face;
-  SimpleServer instance;
+  private Face face;
+  private SimpleServer instance;
 
   @Before
   public void before() throws Exception {

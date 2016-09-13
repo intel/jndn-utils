@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class InMemoryContentStoreTest {
-  ContentStore instance = new InMemoryContentStore(1000);
+  private final ContentStore instance = new InMemoryContentStore(1000);
 
   @Test
   public void basicUsage() throws Exception {

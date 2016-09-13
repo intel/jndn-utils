@@ -34,8 +34,8 @@ import static org.junit.Assert.assertNotNull;
  */
 public class SegmentedServerTest {
 
-  Face face;
-  SegmentedServer instance;
+  private Face face;
+  private SegmentedServer instance;
 
   @Before
   public void before() throws Exception {

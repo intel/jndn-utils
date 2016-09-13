@@ -29,8 +29,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class SigningStageTest {
 
-  KeyChain keyChain;
-  SigningStage instance;
+  private KeyChain keyChain;
+  private SigningStage instance;
 
   public SigningStageTest() throws SecurityException {
     keyChain = MockKeyChain.configure(new Name("/test/signer"));

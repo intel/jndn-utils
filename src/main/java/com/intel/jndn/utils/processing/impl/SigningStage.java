@@ -20,8 +20,7 @@ import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 
 /**
- * As a part of a {@link com.intel.jndn.utils.ServerIn} pipeline, this stage
- * will sign a {@link Data} packet.
+ * As a part of a server pipeline, this stage will sign a {@link Data} packet.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

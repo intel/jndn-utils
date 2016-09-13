@@ -35,8 +35,8 @@ import static org.junit.Assert.*;
  */
 public class ServerBaseImplTest {
 
-  Face face;
-  ServerBaseImpl instance;
+  private Face face;
+  private ServerBaseImpl instance;
 
   @Before
   public void before() throws Exception {

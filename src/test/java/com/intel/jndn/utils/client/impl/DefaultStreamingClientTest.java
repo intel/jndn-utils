@@ -29,7 +29,7 @@ import static org.junit.Assert.fail;
  */
 public class DefaultStreamingClientTest {
 
-  DefaultStreamingClient instance = new DefaultStreamingClient();
+  private final DefaultStreamingClient instance = new DefaultStreamingClient();
 
   @Test
   public void testGetAsyncStream() throws Exception {

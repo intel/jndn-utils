@@ -38,15 +38,13 @@ import java.util.Set;
  */
 public class BoundedLinkedMap<K, V> implements Map<K, V> {
   private final LinkedHashMap<K, V> map;
-  private final int maxSize;
   private K latest;
 
   /**
    * @param maxSize the maximum allowed number of records to store
    */
   public BoundedLinkedMap(int maxSize) {
-    this.maxSize = maxSize;
-    this.map = new LinkedHashMap<K, V>(this.maxSize) {
+    this.map = new LinkedHashMap<K, V>(maxSize) {
       @Override
       public boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         return size() > maxSize;

@@ -105,7 +105,7 @@ public class TestHelper {
 
     public ScheduledExecutorService executor;
     public KeyChain keyChain;
-    public List<Face> faces = new ArrayList<>();
+    public final List<Face> faces = new ArrayList<>();
   }
 
   public static class EventProcessor implements Runnable {

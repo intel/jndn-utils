@@ -40,12 +40,12 @@ import static org.junit.Assert.assertNotNull;
  */
 public class SegmentedServerTestIT {
 
-  protected static final int DATA_SIZE_BYTES = 10000;
+  private static final int DATA_SIZE_BYTES = 10000;
   private static final Logger logger = Logger.getLogger(SegmentedServerTestIT.class.getName());
   private static final Name PREFIX = new Name("/test/for/segmented-server");
-  Face face;
-  SegmentedServer instance;
-  private String ip;
+  private final Face face;
+  private final SegmentedServer instance;
+  private final String ip;
 
   public SegmentedServerTestIT() throws SecurityException {
     this.ip = System.getProperty("nfd.ip");
@@ -98,7 +98,7 @@ public class SegmentedServerTestIT {
     logger.info("Retrieved data: " + retrieved.getName().toUri());
   }
 
-  Data buildDataPacket(Name name) {
+  private Data buildDataPacket(Name name) {
     Data data = new Data(new Name(name).appendSegment(0));
     data.setContent(new Blob(TestHelper.buildRandomBytes(DATA_SIZE_BYTES)));
     data.getMetaInfo().setFreshnessPeriod(30000);

@@ -37,7 +37,7 @@ public class DefaultSegmentedClient implements SegmentedClient {
 
   private static final Logger logger = Logger.getLogger(DefaultSegmentedClient.class.getName());
   private static DefaultSegmentedClient defaultInstance;
-  private byte marker = 0x00;
+  private final byte marker = 0x00;
 
   /**
    * Singleton access for simpler client use

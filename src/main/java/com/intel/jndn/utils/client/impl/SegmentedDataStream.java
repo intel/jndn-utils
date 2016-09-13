@@ -50,8 +50,8 @@ public class SegmentedDataStream implements DataStream {
   private final byte PARTITION_MARKER = 0x00;
   private volatile long current = -1;
   private volatile long end = Long.MAX_VALUE;
-  private Map<Long, Data> packets = new HashMap<>();
-  private List<Object> observers = new ArrayList<>();
+  private final Map<Long, Data> packets = new HashMap<>();
+  private final List<Object> observers = new ArrayList<>();
   private Exception exception;
 
   @Override
@@ -86,7 +86,6 @@ public class SegmentedDataStream implements DataStream {
       throw new StreamException(exception);
     }
 
-    Object o = new LinkedList();
     return new DataAssembler(list(), PARTITION_MARKER).assemble();
   }
 
@@ -148,7 +147,7 @@ public class SegmentedDataStream implements DataStream {
         current++;
         assert (packets.containsKey(current));
         Data retrieved = packets.get(current);
-        observersOfType(OnData.class).stream().forEach((OnData cb) -> {
+        observersOfType(OnData.class).forEach((OnData cb) -> {
           cb.onData(interest, retrieved);
         });
       } while (hasNextPacket());
@@ -174,14 +173,14 @@ public class SegmentedDataStream implements DataStream {
 
   @Override
   public synchronized void onComplete() {
-    observersOfType(OnComplete.class).stream().forEach((OnComplete cb) -> {
+    observersOfType(OnComplete.class).forEach((OnComplete cb) -> {
       cb.onComplete();
     });
   }
 
   @Override
   public synchronized void onTimeout(Interest interest) {
-    observersOfType(OnTimeout.class).stream().forEach((OnTimeout cb) -> {
+    observersOfType(OnTimeout.class).forEach((OnTimeout cb) -> {
       cb.onTimeout(interest);
     });
   }
@@ -190,7 +189,7 @@ public class SegmentedDataStream implements DataStream {
   public synchronized void onException(Exception exception) {
     this.exception = exception;
 
-    observersOfType(OnException.class).stream().forEach((OnException cb) -> {
+    observersOfType(OnException.class).forEach((OnException cb) -> {
       cb.onException(exception);
     });
   }

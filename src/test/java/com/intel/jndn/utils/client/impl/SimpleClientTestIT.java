@@ -47,7 +47,7 @@ public class SimpleClientTestIT {
   private static final Name PREFIX_RETRIEVE = new Name("/test/simple-client/retrieve-one").append(TestHelper.buildRandomString(10));
   private static final Name PREFIX_RETRIEVE_MULTIPLE = new Name("/test/simple-client/retrieve-multiple").append(TestHelper.buildRandomString(10));
   private final TestHelper.NdnEnvironment environment;
-  SimpleClient instance;
+  private SimpleClient instance;
 
   public SimpleClientTestIT() throws SecurityException {
     String ip = System.getProperty("nfd.ip");
@@ -116,7 +116,7 @@ public class SimpleClientTestIT {
 
   private class DataServer implements OnInterestCallback {
 
-    private Data data;
+    private final Data data;
 
     public DataServer(Data data) {
       this.data = data;

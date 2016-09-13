@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DefaultSegmentedClientTest {
 
-  private DefaultSegmentedClient instance = new DefaultSegmentedClient();
+  private final DefaultSegmentedClient instance = new DefaultSegmentedClient();
 
   @Test
   public void testGetSegmentsAsync() throws Exception {

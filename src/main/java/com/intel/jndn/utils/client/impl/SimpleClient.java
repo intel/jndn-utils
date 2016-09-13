@@ -160,7 +160,6 @@ public class SimpleClient implements Client {
    * @return a default interest for the given name
    */
   public Interest getDefaultInterest(Name name) {
-    Interest interest = new Interest(name, interestLifetime);
-    return interest;
+    return new Interest(name, interestLifetime);
   }
 }

@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class SegmentedDataStreamTest {
 
-  SegmentedDataStream instance = new SegmentedDataStream();
+  private final SegmentedDataStream instance = new SegmentedDataStream();
 
   @Test
   public void testAddingSequentialData() throws StreamException {
@@ -133,7 +133,7 @@ public class SegmentedDataStreamTest {
     assertEquals(7, instance.list().length);
   }
 
-  protected void addPacketToInstance(long i) {
+  private void addPacketToInstance(long i) {
     Name name = new Name().appendSegment(i);
     instance.onData(new Interest(name), new Data(name));
   }

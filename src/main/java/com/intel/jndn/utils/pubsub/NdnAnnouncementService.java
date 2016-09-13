@@ -47,7 +47,7 @@ class NdnAnnouncementService implements AnnouncementService {
   private final Name topicPrefix;
   private final Name broadcastPrefix;
   private final Set<Long> known = new HashSet<>();
-  private BackoffRetryClient client;
+  private final BackoffRetryClient client;
   private boolean stopped = false;
 
   private NdnAnnouncementService(Face face, Name broadcastPrefix, Name topicPrefix) {

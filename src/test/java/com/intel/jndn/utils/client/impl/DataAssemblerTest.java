@@ -73,6 +73,6 @@ public class DataAssemblerTest {
     byte marker = 0x00;
     DataAssembler instance = new DataAssembler(packets, marker);
 
-    Data reassembled = instance.assemble();
+    instance.assemble();
   }
 }

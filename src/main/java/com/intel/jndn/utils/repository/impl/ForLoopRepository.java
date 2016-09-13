@@ -30,7 +30,7 @@ import net.named_data.jndn.Name;
  */
 public class ForLoopRepository implements Repository {
 
-  private List<Record> storage = new ArrayList<>();
+  private final List<Record> storage = new ArrayList<>();
 
   /**
    * {@inheritDoc}

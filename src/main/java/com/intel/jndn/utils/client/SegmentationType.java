@@ -24,7 +24,7 @@ public enum SegmentationType {
   SEGMENT((byte) 0x00),
   BYTE_OFFSET((byte) 0xFB);
 
-  private byte marker;
+  private final byte marker;
 
   SegmentationType(byte marker) {
     this.marker = marker;
