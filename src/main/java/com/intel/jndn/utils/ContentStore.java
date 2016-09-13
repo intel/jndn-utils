@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * TODO merge with Repository
+ * Represents a named content store of NDN data which allows querying by name or interest; TODO merge with Repository
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

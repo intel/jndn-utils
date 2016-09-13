@@ -19,7 +19,6 @@ import com.intel.jndn.utils.ContentStore;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -28,13 +27,8 @@ import static org.junit.Assert.*;
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class BoundedInMemoryContentStoreTest {
-  ContentStore instance = new BoundedInMemoryContentStore(5, 1000);
-
-  @Before
-  public void setUp() throws Exception {
-
-  }
+public class InMemoryContentStoreTest {
+  ContentStore instance = new InMemoryContentStore(1000);
 
   @Test
   public void basicUsage() throws Exception {
@@ -95,5 +89,4 @@ public class BoundedInMemoryContentStoreTest {
     Interest interest2 = new Interest(new Name("/a")).setChildSelector(Interest.CHILD_SELECTOR_LEFT);
     assertEquals(".", instance.get(interest2).get().toString());
   }
-
 }

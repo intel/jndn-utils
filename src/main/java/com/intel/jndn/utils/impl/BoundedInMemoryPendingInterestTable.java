@@ -14,7 +14,7 @@
 
 package com.intel.jndn.utils.impl;
 
-import com.intel.jndn.utils.pubsub.PendingInterestTable;
+import com.intel.jndn.utils.PendingInterestTable;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
@@ -24,6 +24,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
+ * TODO use NameTree for storage? or Set and override Interest equals()
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class BoundedInMemoryPendingInterestTable implements PendingInterestTable {
@@ -44,6 +46,7 @@ public class BoundedInMemoryPendingInterestTable implements PendingInterestTable
   public boolean has(Interest interest) {
     if (interest.getChildSelector() != -1) {
       for (Name name : table.keySet()) {
+        // TODO this logic must be more complex; must match selectors as well
         if (interest.matchesName(name)) {
           return true;
         }

@@ -20,6 +20,11 @@ import net.named_data.jndn.util.Blob;
 import java.util.Map;
 
 /**
+ * Represent a publisher response to a subscriber request for a message. Note that the {@link #attributes} act as a type
+ * of header optionally prepended to the message content. The intent of this is to allow publishers to inform
+ * subscribers of publisher-side state changes without requiring a separate mechanism (with accompanying complexity and
+ * overhead); the full set of publisher state attributes should be served elsewhere, not in this class.
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 class Response {
@@ -35,10 +40,16 @@ class Response {
     this.content = content;
   }
 
+  /**
+   * @return the message ID of the published message
+   */
   long messageId() {
     return messageId;
   }
 
+  /**
+   * @return the content of the message
+   */
   Blob content() {
     return content;
   }

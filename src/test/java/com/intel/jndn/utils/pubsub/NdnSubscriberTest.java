@@ -15,13 +15,18 @@
 package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.utils.Client;
+import com.intel.jndn.utils.On;
 import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.concurrent.CompletableFuture;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,7 +36,7 @@ import static org.mockito.Mockito.when;
  */
 public class NdnSubscriberTest {
 
-  public static final Name TOPIC_NAME = new Name("/subscriber");
+  private static final Name TOPIC_NAME = new Name("/subscriber");
   private NdnSubscriber instance;
   private AnnouncementService announcementService;
 
@@ -40,21 +45,21 @@ public class NdnSubscriberTest {
     Face face = mock(Face.class);
     announcementService = mock(AnnouncementService.class);
     Client client = mock(Client.class);
+    when(client.getAsync(any(Face.class), any(Interest.class))).thenReturn(new CompletableFuture<>());
     instance = new NdnSubscriber(face, TOPIC_NAME, null, null, announcementService, client);
   }
 
   @Test
-  public void open() throws Exception {
+  public void basicUsage() throws Exception {
     instance.open();
-  }
 
-  @Test
-  public void close() throws Exception {
+    // subscriber is driven by IO from announcements and publisher messages
+
     instance.close();
   }
 
   @Test
-  public void knownPublishers() throws Exception {
+  public void knownPublishersUsingCallbacks() throws Exception {
     ArgumentCaptor<On<Long>> existingPublishersSignal = ArgumentCaptor.forClass((Class) On.class);
     ArgumentCaptor<On<Long>> newPublishersSignal = ArgumentCaptor.forClass((Class) On.class);
     when(announcementService.discoverExistingAnnouncements(existingPublishersSignal.capture(), any(), any())).thenReturn(null);
@@ -74,9 +79,14 @@ public class NdnSubscriberTest {
   }
 
   @Test
-  public void subscribe() throws Exception {
-    instance.add(1);
-    instance.remove(1);
-  }
+  public void knownPublishersUsingMethods() throws Exception {
+    instance.addPublisher(99);
 
+    assertEquals(1, instance.knownPublishers().size());
+    assertTrue(instance.knownPublishers().contains(99L));
+
+    instance.removePublisher(99);
+
+    assertEquals(0, instance.knownPublishers().size());
+  }
 }

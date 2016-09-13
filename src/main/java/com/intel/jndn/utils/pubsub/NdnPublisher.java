@@ -15,6 +15,7 @@
 package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.utils.ContentStore;
+import com.intel.jndn.utils.PendingInterestTable;
 import com.intel.jndn.utils.Publisher;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -36,6 +37,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * TODO look at thread safety
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 class NdnPublisher implements Publisher, OnInterestCallback {
@@ -60,7 +63,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     this.contentStore = contentStore;
   }
 
-  synchronized void open() throws RegistrationFailureException {
+  synchronized void open() throws IOException {
     opened = true;
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
@@ -71,12 +74,16 @@ class NdnPublisher implements Publisher, OnInterestCallback {
       future.get(10, TimeUnit.SECONDS);
       announcementService.announceEntrance(publisherId);
     } catch (IOException | SecurityException | InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RegistrationFailureException(e);
+      throw new IOException("Failed to register NDN prefix; pub-sub IO will be impossible", e);
     }
   }
 
-  // TODO this should not clear content store or remove registered prefix; do that in the future to allow subscribers
-  // to retrieve still-alive messages
+  /**
+   * TODO this should not clear content store or remove registered prefix; do that in the future to allow subscribers
+   * to retrieve still-alive messages
+   *
+   * @throws IOException if the group exit announcement fails
+   */
   @Override
   public synchronized void close() throws IOException {
     if (opened) {
@@ -89,17 +96,13 @@ class NdnPublisher implements Publisher, OnInterestCallback {
   @Override
   public void publish(Blob message) throws IOException {
     if (!opened) {
-      try {
-        open();
-      } catch (RegistrationFailureException e) {
-        throw new IOException(e);
-      }
+      open();
     }
 
     long id = latestMessageId.getAndIncrement();
-    Name name = PubSubNamespace.toMessageName(prefix, publisherId, id);
+    Name name = PubSubNamespace.toMessageName(prefix, id);
 
-    contentStore.put(name, message);
+    contentStore.put(name, PubSubNamespace.toResponse(null, message));
     LOGGER.log(Level.INFO, "Published message {0} to content store: {1}", new Object[]{id, name});
 
     if (pendingInterestTable.has(new Interest(name))) {
@@ -122,7 +125,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     }
   }
 
-  private boolean isAttributesRequest(Name name, Interest interest) {
+  private static boolean isAttributesRequest(Name name, Interest interest) {
     return name.equals(interest.getName()) && interest.getChildSelector() == -1;
   }
 
@@ -142,7 +145,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     }
   }
 
-  private void sendAttributes(Face face, Name publisherName) {
+  private static void sendAttributes(Face face, Name publisherName) {
     Data data = new Data(publisherName);
     data.setContent(new Blob("[attributes here]"));
     data.getMetaInfo().setFreshnessPeriod(ATTRIBUTES_FRESHNESS_PERIOD);

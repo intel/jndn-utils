@@ -14,18 +14,22 @@
 
 package com.intel.jndn.utils;
 
-import com.intel.jndn.utils.pubsub.Cancellation;
-import com.intel.jndn.utils.pubsub.On;
-import net.named_data.jndn.util.Blob;
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface Subscriber extends AutoCloseable {
   /**
-   * @param onMessage called every time a new message is received
-   * @param onError called every time an error occurs
-   * @return a cancellation token for stopping the subscription
+   * @return the currently known publishers
    */
-  Cancellation subscribe(On<Blob> onMessage, On<Exception> onError);
+  Set<Long> knownPublishers();
+
+  /**
+   * Open the subscriber transport mechanisms and retrieve publisher messages
+   *
+   * @throws IOException if the subscriber fails during network access
+   */
+  void open() throws IOException;
 }

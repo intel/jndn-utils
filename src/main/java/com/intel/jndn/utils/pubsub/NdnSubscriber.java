@@ -14,7 +14,9 @@
 
 package com.intel.jndn.utils.pubsub;
 
+import com.intel.jndn.utils.Cancellation;
 import com.intel.jndn.utils.Client;
+import com.intel.jndn.utils.On;
 import com.intel.jndn.utils.Subscriber;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -24,14 +26,16 @@ import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * TODO look at thread safety
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 class NdnSubscriber implements Subscriber {
@@ -42,7 +46,7 @@ class NdnSubscriber implements Subscriber {
   private final On<Exception> onError;
   private final AnnouncementService announcementService;
   private final Client client;
-  private final Map<Long, Subscription> subscriptions = new HashMap<>();
+  private final Map<Long, Subscription> subscriptions = new ConcurrentHashMap<>();
   private Cancellation newAnnouncementCancellation;
   private Cancellation existingAnnouncementsCancellation;
 
@@ -55,13 +59,19 @@ class NdnSubscriber implements Subscriber {
     this.client = client;
   }
 
-  void open() throws RegistrationFailureException, IOException {
-    LOGGER.log(Level.INFO, "Starting subscriber: {0}", prefix);
-    existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::add, null, e -> close());
-    newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::add, this::remove, e -> close());
+  @Override
+  public Set<Long> knownPublishers() {
+    return subscriptions.keySet();
   }
 
-  void add(long publisherId) {
+  @Override
+  public void open() throws IOException {
+    LOGGER.log(Level.INFO, "Starting subscriber: {0}", prefix);
+    existingAnnouncementsCancellation = announcementService.discoverExistingAnnouncements(this::addPublisher, null, e -> close());
+    newAnnouncementCancellation = announcementService.observeNewAnnouncements(this::addPublisher, this::removePublisher, e -> close());
+  }
+
+  void addPublisher(long publisherId) {
     if (subscriptions.containsKey(publisherId)) {
       LOGGER.log(Level.WARNING, "Duplicate publisher ID {} received from announcement service; this should not happen and will be ignored", publisherId);
     } else {
@@ -71,7 +81,7 @@ class NdnSubscriber implements Subscriber {
     }
   }
 
-  void remove(long publisherId) {
+  void removePublisher(long publisherId) {
     Subscription removed = subscriptions.remove(publisherId);
     removed.cancel();
   }
@@ -93,32 +103,6 @@ class NdnSubscriber implements Subscriber {
     }
   }
 
-  Set<Long> knownPublishers() {
-    return subscriptions.keySet();
-  }
-
-  // TODO repeated calls?
-  // TODO remove this, do topic.subscribe(On..., On...) instead; or new Subscriber(On..., On..., ...).open()
-  @Override
-  public Cancellation subscribe(On<Blob> onMessage, On<Exception> onError) {
-//    if (!started) {
-//      try {
-//        open();
-//      } catch (RegistrationFailureException e) {
-//        LOGGER.log(Level.SEVERE, "Failed to start announcement service, aborting subscription", e);
-//        onError.on(e);
-//        return Cancellation.CANCELLED;
-//      }
-//    }
-//
-//    LOGGER.log(Level.INFO, "Subscribing: {0}", prefix);
-//    for (Subscription c : subscriptions.values()) {
-//      c.subscribe();
-//    }
-//
-    return this::close;
-  }
-
   private class Subscription implements Cancellation {
     final long publisherId;
     long messageId;
@@ -128,12 +112,6 @@ class NdnSubscriber implements Subscriber {
       this.publisherId = publisherId;
     }
 
-    synchronized void subscribe() {
-      // would prefer this to be getAsync(on<>, on<>)?
-      currentRequest = client.getAsync(face, buildLatestInterest(publisherId)); // TODO backoff
-      currentRequest.handle(this::handleResponse);
-    }
-
     @Override
     public synchronized void cancel() {
       if (currentRequest != null) {
@@ -141,12 +119,35 @@ class NdnSubscriber implements Subscriber {
       }
     }
 
+    synchronized void subscribe() {
+      // would prefer this to be getAsync(on<>, on<>)?
+      currentRequest = client.getAsync(face, buildLatestInterest(publisherId));
+      currentRequest.handle(this::handleResponse);
+    }
+
+    private Interest buildLatestInterest(long publisherId) {
+      Name name = PubSubNamespace.toPublisherName(prefix, publisherId);
+      Interest interest = new Interest(name); // TODO ms lifetime
+      interest.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
+      return interest;
+    }
+
+    synchronized void next(long publisherId, long messageId) {
+      currentRequest = client.getAsync(face, buildNextInterest(publisherId, messageId));
+      currentRequest.handle(this::handleResponse);
+    }
+
+    private Interest buildNextInterest(long publisherId, long messageId) {
+      Name name = PubSubNamespace.toMessageName(prefix, publisherId, messageId + 1);
+      return new Interest(name); // TODO ms lifetime
+    }
+
     private Void handleResponse(Data data, Throwable throwable) {
       if (throwable != null) {
         onError.on((Exception) throwable); // TODO avoid cast?
       } else {
         try {
-          Response response = PubSubNamespace.toResponse(data);
+          Response response = PubSubNamespace.parseResponse(data);
           this.messageId = response.messageId();
           onMessage.on(response.content()); // TODO buffer and catch exceptions
         } catch (EncodingException e) {
@@ -158,23 +159,6 @@ class NdnSubscriber implements Subscriber {
       }
 
       return null;
-    }
-
-    private void next(long publisherId, long messageId) {
-      currentRequest = client.getAsync(face, buildNextInterest(publisherId, messageId));
-      currentRequest.handle(this::handleResponse);
-    }
-
-    private Interest buildLatestInterest(long publisherId) {
-      Name name = PubSubNamespace.toPublisherName(prefix, publisherId);
-      Interest interest = new Interest(name); // TODO ms lifetime
-      interest.setChildSelector(Interest.CHILD_SELECTOR_RIGHT);
-      return interest;
-    }
-
-    private Interest buildNextInterest(long publisherId, long messageId) {
-      Name name = PubSubNamespace.toMessageName(prefix, publisherId, messageId + 1);
-      return new Interest(name); // TODO ms lifetime
     }
 
     @Override

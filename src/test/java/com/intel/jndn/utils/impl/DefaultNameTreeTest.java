@@ -43,8 +43,10 @@ public class DefaultNameTreeTest {
   }
 
   @Test
-  public void name() throws Exception {
-
+  public void retrieveName() throws Exception {
+    assertEquals("/a", instance.find(new Name("/a")).get().fullName().toString());
+    assertEquals("/a/b", instance.find(new Name("/a/b")).get().fullName().toString());
+    assertEquals("/a/b/c", instance.find(new Name("/a/b/c")).get().fullName().toString());
   }
 
   @Test
@@ -65,7 +67,11 @@ public class DefaultNameTreeTest {
   @Test
   public void findDeep() throws Exception {
     instance.insert(new Name("/a/e/x/y/z"), "...");
-    assertEquals(1, instance.find(new Name("/a/e/x")).get().children());
+    assertEquals(2, instance.find(new Name("/a")).get().children().size());
+    assertEquals(1, instance.find(new Name("/a/e")).get().children().size());
+    assertEquals(1, instance.find(new Name("/a/e/x")).get().children().size());
+    assertEquals(1, instance.find(new Name("/a/e/x/y")).get().children().size());
+    assertEquals(0, instance.find(new Name("/a/e/x/y/z")).get().children().size());
   }
 
   @Test

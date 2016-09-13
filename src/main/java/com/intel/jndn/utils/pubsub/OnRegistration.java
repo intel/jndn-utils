@@ -22,6 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 /**
+ * Helper for tracking and logging prefix registrations; TODO replace or remove this in the future
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 class OnRegistration implements OnRegisterFailed, OnRegisterSuccess {

@@ -14,6 +14,8 @@
 
 package com.intel.jndn.utils.pubsub;
 
+import com.intel.jndn.utils.Cancellation;
+import com.intel.jndn.utils.On;
 import com.intel.jndn.utils.client.impl.BackoffRetryClient;
 import net.named_data.jndn.Exclude;
 import net.named_data.jndn.Face;
@@ -32,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.intel.jndn.utils.pubsub.Cancellation.CANCELLED;
+import static com.intel.jndn.utils.Cancellation.CANCELLED;
 
 /**
  * @author Andrew Brown, andrew.brown@intel.com
@@ -91,6 +93,7 @@ class NdnAnnouncementService implements AnnouncementService {
     return () -> stopped = true;
   }
 
+  // TODO need special namespace for discovery
   private Interest discover(BackoffRetryClient client, On<Long> onFound, On<Void> onComplete, On<Exception> onError) throws IOException {
     Interest interest = new Interest(topicPrefix);
     interest.setInterestLifetimeMilliseconds(STARTING_DISCOVERY_LIFETIME);
@@ -141,7 +144,7 @@ class NdnAnnouncementService implements AnnouncementService {
   }
 
   @Override
-  public Cancellation observeNewAnnouncements(On<Long> onAdded, On<Long> onRemoved, On<Exception> onError) throws RegistrationFailureException {
+  public Cancellation observeNewAnnouncements(On<Long> onAdded, On<Long> onRemoved, On<Exception> onError) throws IOException {
     LOGGER.log(Level.INFO, "Observing new announcements: {0}", broadcastPrefix);
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
@@ -150,8 +153,8 @@ class NdnAnnouncementService implements AnnouncementService {
     try {
       long registeredPrefix = face.registerPrefix(broadcastPrefix, onAnnouncement, (OnRegisterFailed) onRegistration, onRegistration);
       return () -> face.removeRegisteredPrefix(registeredPrefix);
-    } catch (IOException | SecurityException e) {
-      throw new RegistrationFailureException(e);
+    } catch (SecurityException e) {
+      throw new IOException("Failed while using transport security key chain", e);
     }
   }
 

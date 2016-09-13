@@ -14,22 +14,22 @@
 
 package com.intel.jndn.utils;
 
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Name;
-
-import java.io.IOException;
-
 /**
+ * Represents a token used for canceling some ongoing action. This approach was chosen as it is lighter and more
+ * flexible than a cancellable {@link java.util.concurrent.Future}; perhaps it could be replaced by {@link
+ * AutoCloseable} although this seems to imply something else (however, the language support is a benefit, TODO
+ * re-look at this).
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public interface PushableRepository extends Repository {
+public interface Cancellation {
   /**
-   * Write data to a face. Each name must correspond to one datum, but the implementation may choose to write these
-   * as separate data packets (e.g. as segments of a file).
-   *
-   * @param face the face to write the data to
-   * @param name the name of the data to write
-   * @throws IOException if the writing fails
+   * Shortcut for a no-op, already-cancelled cancellation
    */
-  void push(Face face, Name name) throws IOException;
+  Cancellation CANCELLED = () -> {/* do nothing */};
+
+  /**
+   * Cancel the action referenced by this token
+   */
+  void cancel();
 }

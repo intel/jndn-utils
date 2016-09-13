@@ -16,7 +16,7 @@ package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.mock.MeasurableFace;
 import com.intel.jndn.mock.MockForwarder;
-import com.intel.jndn.utils.impl.BoundedInMemoryContentStore;
+import com.intel.jndn.utils.impl.InMemoryContentStore;
 import com.intel.jndn.utils.impl.BoundedInMemoryPendingInterestTable;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -55,16 +55,18 @@ public class NdnPublisherTest {
     face = forwarder.connect();
     NdnAnnouncementService announcementService = new NdnAnnouncementService(face, PUBLISHER_PREFIX);
     BoundedInMemoryPendingInterestTable pendingInterestTable = new BoundedInMemoryPendingInterestTable(1024);
-    BoundedInMemoryContentStore contentStore = new BoundedInMemoryContentStore(1024, 2000);
+    InMemoryContentStore contentStore = new InMemoryContentStore(2000);
     instance = new NdnPublisher(face, PUBLISHER_PREFIX, PUBLISHER_ID, announcementService, pendingInterestTable, contentStore);
 
-    driveFace(face); // TODO preferably do this in MockForwarder
+    driveFace(face); // TODO preferably do this in MockForwarder; causes failures if run in certain orders
   }
 
   @Test
-  public void openClose() throws Exception {
+  public void basicUsage() throws Exception {
     instance.open();
     assertEquals(1, numSentInterests()); // doesn't count prefix registration, only announcement
+
+    instance.publish(new Blob("..."));
 
     instance.close();
     assertEquals(2, numSentInterests());
@@ -72,7 +74,7 @@ public class NdnPublisherTest {
   }
 
   @Test
-  public void close() throws Exception {
+  public void closeWithoutOpen() throws Exception {
     instance.close();
 
     assertEquals(0, numSentInterests()); // if the publisher has not been opened, it will not announce an exit
@@ -152,10 +154,7 @@ public class NdnPublisherTest {
 
   private void driveFace(Face face) throws InterruptedException {
     ScheduledExecutorService pool = Executors.newSingleThreadScheduledExecutor();
-    //CountDownLatch latch = new CountDownLatch(1);
-
     pool.schedule(() -> {
-      //latch.countDown();
       try {
         face.processEvents();
       } catch (IOException | EncodingException e) {
@@ -163,7 +162,5 @@ public class NdnPublisherTest {
         fail(e.getMessage());
       }
     }, 50, TimeUnit.MILLISECONDS);
-
-    //latch.await();
   }
 }

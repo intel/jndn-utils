@@ -19,13 +19,15 @@ import net.named_data.jndn.Name;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * // TODO need a way to bound the size
+ * TODO need a way to bound the size
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultNameTree<T> implements NameTree<T> {
@@ -49,7 +51,14 @@ public class DefaultNameTree<T> implements NameTree<T> {
 
   @Override
   public Name fullName() {
-    throw new UnsupportedOperationException("Need recursive call");
+    ArrayList<Name.Component> components = new ArrayList<>();
+    NameTree<T> self = this;
+    while (self.lastComponent() != null) {
+      components.add(self.lastComponent());
+      self = self.parent();
+    }
+    Collections.reverse(components);
+    return new Name(components);
   }
 
   @Override
@@ -81,7 +90,7 @@ public class DefaultNameTree<T> implements NameTree<T> {
       if (child == null) {
         return Optional.empty();
       } else {
-        return child.find(name.size() > 1 ? name.getSubName(-1) : new Name());
+        return child.find(name.size() > 1 ? name.getSubName(1) : new Name());
       }
     }
   }

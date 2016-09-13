@@ -17,6 +17,7 @@ package com.intel.jndn.utils.pubsub;
 import com.intel.jndn.mock.MockKeyChain;
 import com.intel.jndn.utils.Publisher;
 import com.intel.jndn.utils.Subscriber;
+import com.intel.jndn.utils.Topic;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.ThreadPoolFace;
@@ -24,6 +25,7 @@ import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.AsyncTcpTransport;
 import net.named_data.jndn.util.Blob;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Random;
@@ -39,24 +41,32 @@ import static org.junit.Assert.fail;
 /**
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class TopicTestIT {
-  private static final Logger LOGGER = Logger.getLogger(TopicTestIT.class.getName());
+public class PubSubTestIT {
+  private static final Logger LOGGER = Logger.getLogger(PubSubTestIT.class.getName());
+  private Face pubFace;
+  private Face subFace;
+
+  @Before
+  public void before() throws Exception {
+    String hostname = System.getProperty("nfd.ip");
+    LOGGER.info("Testing on NFD at: " + hostname);
+    pubFace = connect(hostname);
+    subFace = connect(hostname);
+  }
 
   @Test
   public void basicUsage() throws Exception {
-    Face pubFace = connect("localhost");
-    Face subFace = connect("localhost");
     Topic topic = new Topic(new Name("/pub/sub/topic"));
-    CountDownLatch latch = new CountDownLatch(3);
+    CountDownLatch latch = new CountDownLatch(1);
 
-    Subscriber subscriber = topic.subscribe(pubFace, b -> latch.countDown(), e -> fail(e.getMessage()));
+    topic.subscribe(pubFace, b -> latch.countDown(), e -> fail(e.getMessage()));
 
     Publisher publisher = topic.newPublisher(subFace);
     publisher.publish(new Blob("."));
     publisher.publish(new Blob(".."));
     publisher.publish(new Blob("..."));
 
-    latch.await(20, TimeUnit.MINUTES);
+    latch.await(20, TimeUnit.SECONDS);
     assertEquals(0, latch.getCount());
   }
 
@@ -66,7 +76,8 @@ public class TopicTestIT {
     AsyncTcpTransport.ConnectionInfo connectionInfo = new AsyncTcpTransport.ConnectionInfo(hostName, 6363, true);
     ThreadPoolFace face = new ThreadPoolFace(pool, transport, connectionInfo);
 
-    KeyChain keyChain = MockKeyChain.configure(new Name("/topic/test/it").appendVersion(new Random().nextLong()));
+    Name signatureName = new Name("/topic/test/it").appendVersion(new Random().nextLong()); // note that using the same signature name seemed to cause registration failures
+    KeyChain keyChain = MockKeyChain.configure(signatureName);
     face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
 
     return face;
