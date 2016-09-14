@@ -14,9 +14,9 @@
 package com.intel.jndn.utils.repository.impl;
 
 /**
- * Thrown when a {@link Repository} cannot retrieve a stored packet.
+ * Thrown when a {@link com.intel.jndn.utils.Repository} cannot retrieve a stored packet.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DataNotFoundException extends Exception {
 

@@ -20,9 +20,9 @@ import net.named_data.jndn.Name;
 /**
  * Functional interface for serving data from Server.on()
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface RespondWithData {
 
-  public Data onInterest(Name prefix, Interest interest) throws Exception;
+  Data onInterest(Name prefix, Interest interest) throws Exception;
 }

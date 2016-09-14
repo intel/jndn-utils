@@ -18,28 +18,27 @@ import com.intel.jndn.utils.client.OnException;
 import com.intel.jndn.utils.client.SegmentationType;
 import com.intel.jndn.utils.client.SegmentedClient;
 import com.intel.jndn.utils.client.StreamingClient;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.OnData;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.OnData;
 
 /**
  * Default implementation of {@link StreamingClient}; uses a segmented client to
  * retrieve packets asynchronously and pipes them to a stream as they are
  * received.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultStreamingClient implements StreamingClient {
-
-  private static final Logger logger = Logger.getLogger(DefaultStreamingClient.class.getName());
-  private SegmentedClient client;
+  private static final Logger LOGGER = Logger.getLogger(DefaultStreamingClient.class.getName());
 
   /**
    * {@inheritDoc}
@@ -50,13 +49,14 @@ public class DefaultStreamingClient implements StreamingClient {
   }
 
   /**
-   * 
-   * @param face
-   * @param interest
-   * @param partitionMarker
-   * @param onException
-   * @return
-   * @throws IOException
+   * @param face the {@link Face} on which to make the request; call {@link Face#processEvents()} separately to complete
+   * the request
+   * @param interest the {@link Interest} to send over the network
+   * @param partitionMarker the byte marker identifying how the data packets are partitioned (e.g. segmentation, see
+   * http://named-data.net/doc/tech-memos/naming-conventions.pdf)
+   * @param onException callback fired if a failure occurs during streaming
+   * @return a stream of content bytes
+   * @throws IOException if the stream setup fails
    */
   public InputStream getStreamAsync(Face face, Interest interest, SegmentationType partitionMarker, OnException onException) throws IOException {
     SegmentedClient client = DefaultSegmentedClient.getDefault();
@@ -64,11 +64,10 @@ public class DefaultStreamingClient implements StreamingClient {
   }
 
   /**
-   *
-   * @param onDataStream
-   * @param onException
-   * @return
-   * @throws IOException
+   * @param onDataStream the data stream of incoming data packets
+   * @param onException callback fired if a failure occurs during streaming
+   * @return a stream of content bytes
+   * @throws IOException if the stream setup fails
    */
   public InputStream getStreamAsync(DataStream onDataStream, OnException onException) throws IOException {
     PipedInputStream in = new PipedInputStream();
@@ -97,7 +96,7 @@ public class DefaultStreamingClient implements StreamingClient {
 
     @Override
     public void onException(Exception exception) {
-      logger.log(Level.SEVERE, "Streaming failed", exception);
+      LOGGER.log(Level.SEVERE, "Streaming failed", exception);
     }
   }
 }

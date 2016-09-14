@@ -16,8 +16,6 @@ package com.intel.jndn.utils.server.impl;
 import com.intel.jndn.mock.MockKeyChain;
 import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.client.impl.AdvancedClient;
-import java.io.IOException;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -26,23 +24,28 @@ import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.util.Blob;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test the {@link SegmentedServer} on an actual NFD; to run this, pass the NFD
  * IP/host name as a parameter like <code>-Dnfd.ip=10.1.1.1</code>.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedServerTestIT {
 
+  private static final int DATA_SIZE_BYTES = 10000;
   private static final Logger logger = Logger.getLogger(SegmentedServerTestIT.class.getName());
   private static final Name PREFIX = new Name("/test/for/segmented-server");
-  protected static final int DATA_SIZE_BYTES = 10000;
-  Face face;
-  SegmentedServer instance;
-  private String ip;
+  private final Face face;
+  private final SegmentedServer instance;
+  private final String ip;
 
   public SegmentedServerTestIT() throws SecurityException {
     this.ip = System.getProperty("nfd.ip");
@@ -95,7 +98,7 @@ public class SegmentedServerTestIT {
     logger.info("Retrieved data: " + retrieved.getName().toUri());
   }
 
-  Data buildDataPacket(Name name) {
+  private Data buildDataPacket(Name name) {
     Data data = new Data(new Name(name).appendSegment(0));
     data.setContent(new Blob(TestHelper.buildRandomBytes(DATA_SIZE_BYTES)));
     data.getMetaInfo().setFreshnessPeriod(30000);

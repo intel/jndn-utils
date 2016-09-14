@@ -14,16 +14,18 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.TestHelper;
-import java.util.concurrent.ExecutionException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Name;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test that segment data packets are re-assembled correctly.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DataAssemblerTest {
 
@@ -71,6 +73,6 @@ public class DataAssemblerTest {
     byte marker = 0x00;
     DataAssembler instance = new DataAssembler(packets, marker);
 
-    Data reassembled = instance.assemble();
+    instance.assemble();
   }
 }

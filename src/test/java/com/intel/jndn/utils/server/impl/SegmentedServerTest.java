@@ -15,26 +15,27 @@ package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.utils.client.impl.AdvancedClient;
-import com.intel.jndn.mock.MockFace;
-import java.io.IOException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
-import static org.junit.Assert.*;
-
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 /**
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedServerTest {
 
-  Face face;
-  SegmentedServer instance;
+  private Face face;
+  private SegmentedServer instance;
 
   @Before
   public void before() throws Exception {

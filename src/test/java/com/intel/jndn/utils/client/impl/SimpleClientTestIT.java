@@ -13,14 +13,7 @@
  */
 package com.intel.jndn.utils.client.impl;
 
-import com.intel.jndn.utils.client.impl.SimpleClient;
 import com.intel.jndn.utils.TestHelper;
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -30,24 +23,31 @@ import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.util.Blob;
 import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import org.junit.Test;
 
 /**
  * Test SimpleClient.java; requires a hostname to an NFD accepting a generated
  * key to register prefixes, e.g. mvn test -Dnfd.ip=10.10.10.1
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SimpleClientTestIT {
 
   private static final Logger logger = Logger.getLogger(SimpleClientTestIT.class.getName());
   private static final Name PREFIX_RETRIEVE = new Name("/test/simple-client/retrieve-one").append(TestHelper.buildRandomString(10));
   private static final Name PREFIX_RETRIEVE_MULTIPLE = new Name("/test/simple-client/retrieve-multiple").append(TestHelper.buildRandomString(10));
-
-  SimpleClient instance;
   private final TestHelper.NdnEnvironment environment;
+  private SimpleClient instance;
 
   public SimpleClientTestIT() throws SecurityException {
     String ip = System.getProperty("nfd.ip");
@@ -116,7 +116,7 @@ public class SimpleClientTestIT {
 
   private class DataServer implements OnInterestCallback {
 
-    private Data data;
+    private final Data data;
 
     public DataServer(Data data) {
       this.data = data;

@@ -5,7 +5,7 @@
 
   <groupId>com.intel.jndn.utils</groupId>
   <artifactId>jndn-utils</artifactId>
-  <version>1.0.4</version>
+  <version>1.1.0</version>
   <name>jndn-utils</name>
   <description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network
   </description>
@@ -56,6 +56,12 @@
       <groupId>com.intel.jndn.mock</groupId>
       <artifactId>jndn-mock</artifactId>
       <version>1.1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>1.10.19</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -14,24 +14,26 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.TestHelper;
-import java.util.ArrayList;
-import java.util.stream.IntStream;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.Name.Component;
 import net.named_data.jndn.encoding.EncodingException;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.stream.IntStream;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
 
 /**
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedDataStreamTest {
 
-  SegmentedDataStream instance = new SegmentedDataStream();
+  private final SegmentedDataStream instance = new SegmentedDataStream();
 
   @Test
   public void testAddingSequentialData() throws StreamException {
@@ -131,7 +133,7 @@ public class SegmentedDataStreamTest {
     assertEquals(7, instance.list().length);
   }
 
-  protected void addPacketToInstance(long i) {
+  private void addPacketToInstance(long i) {
     Name name = new Name().appendSegment(i);
     instance.onData(new Interest(name), new Data(name));
   }

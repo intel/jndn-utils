@@ -34,9 +34,9 @@ public class DefaultRetryClientTest {
 
   private static final double INTEREST_LIFETIME_MS = 1.0;
   private DefaultRetryClient client;
-  private Name name = new Name("/test/retry/client");
-  private Interest interest = new Interest(name, INTEREST_LIFETIME_MS);
-  private TestCounter counter = new TestCounter();
+  private final Name name = new Name("/test/retry/client");
+  private final Interest interest = new Interest(name, INTEREST_LIFETIME_MS);
+  private final TestCounter counter = new TestCounter();
 
   @Before
   public void before() throws Exception {

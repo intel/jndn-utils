@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -22,54 +22,56 @@ import net.named_data.jndn.OnTimeout;
  * Define a stream of {@link Data} packets as they are retrieved from the
  * network and provide methods for observing stream events
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * TODO merge with Observable
+ *
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface DataStream extends OnData, OnTimeout, OnComplete, OnException {
 
   /**
    * @return true if the stream is complete
    */
-  public boolean isComplete();
+  boolean isComplete();
 
   /**
    * @return the current list of packets retrieved; this may change as more
    * packets are added
    */
-  public Data[] list();
+  Data[] list();
 
   /**
    * @return an assembled packet containing the concatenated bytes of all
    * received packets
    * @throws StreamException if assembly fails
    */
-  public Data assemble() throws StreamException;
+  Data assemble() throws StreamException;
 
   /**
    * Watch all {@link OnData} events
    *
    * @param onData the callback fired
    */
-  public void observe(OnData onData);
+  void observe(OnData onData);
 
   /**
    * Watch all {@link OnComplete} events
    *
    * @param onComplete the callback fired
    */
-  public void observe(OnComplete onComplete);
+  void observe(OnComplete onComplete);
 
   /**
    * Watch all {@link OnException} events
    *
    * @param onException the callback fired
    */
-  public void observe(OnException onException);
+  void observe(OnException onException);
 
   /**
    * Watch all {@link OnTimeout} events
    *
    * @param onTimeout the callback fired
    */
-  public void observe(OnTimeout onTimeout);
+  void observe(OnTimeout onTimeout);
 
 }

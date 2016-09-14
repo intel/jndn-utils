@@ -13,15 +13,16 @@
  */
 package com.intel.jndn.utils.client;
 
-import java.io.IOException;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+
+import java.io.IOException;
 
 /**
  * Define a client that can retrieve segmented packets into a
  * {@link DataStream}.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface SegmentedClient {
 
@@ -35,5 +36,5 @@ public interface SegmentedClient {
    * @return a data stream of packets returned
    * @throws IOException if the initial request fails
    */
-  public DataStream getSegmentsAsync(Face face, Interest interest) throws IOException;
+  DataStream getSegmentsAsync(Face face, Interest interest) throws IOException;
 }

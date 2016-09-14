@@ -18,7 +18,7 @@ package com.intel.jndn.utils;
  * processing stage may convert a data packet with unencrypted content to one
  * with encrypted content.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface ProcessingStage<T, Y> {
 
@@ -30,5 +30,5 @@ public interface ProcessingStage<T, Y> {
    * may be a new object)
    * @throws Exception if the processing fails
    */
-  public Y process(T input) throws Exception;
+  Y process(T input) throws Exception;
 }

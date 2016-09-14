@@ -26,11 +26,11 @@ import net.named_data.jndn.Name;
  * {@link net.named_data.jndn.util.MemoryContentCache} and borrows the matching
  * logic from there.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class ForLoopRepository implements Repository {
 
-  private List<Record> storage = new ArrayList<>();
+  private final List<Record> storage = new ArrayList<>();
 
   /**
    * {@inheritDoc}
@@ -95,7 +95,7 @@ public class ForLoopRepository implements Repository {
    * components (e.g. c); if the Data is not longer than the Interest, return an
    * empty component.
    */
-  private Name.Component getNextComponentAfterLastInterestComponent(Data content, Interest interest) {
+  private static Name.Component getNextComponentAfterLastInterestComponent(Data content, Interest interest) {
     if (content.getName().size() > interest.getName().size()) {
       return content.getName().get(interest.getName().size());
     } else {
@@ -132,11 +132,7 @@ public class ForLoopRepository implements Repository {
    * record is fresh
    */
   private boolean hasAcceptableFreshness(Interest interest, Record record) {
-    if (!interest.getMustBeFresh()) {
-      return true;
-    } else {
-      return isFresh(record);
-    }
+    return !interest.getMustBeFresh() || isFresh(record);
   }
 
   /**
@@ -171,10 +167,10 @@ public class ForLoopRepository implements Repository {
    */
   private class Record {
 
-    public final Data data;
-    public final long addedAt;
+    final Data data;
+    final long addedAt;
 
-    public Record(Data data) {
+    Record(Data data) {
       this.data = data;
       this.addedAt = System.currentTimeMillis();
     }

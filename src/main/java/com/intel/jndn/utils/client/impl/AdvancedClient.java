@@ -13,49 +13,38 @@
  */
 package com.intel.jndn.utils.client.impl;
 
+import com.intel.jndn.utils.client.DataStream;
 import com.intel.jndn.utils.client.OnComplete;
 import com.intel.jndn.utils.client.OnException;
 import com.intel.jndn.utils.client.RetryClient;
-import com.intel.jndn.utils.client.SegmentedClient;
-import com.intel.jndn.utils.client.DataStream;
 import com.intel.jndn.utils.client.SegmentationType;
+import com.intel.jndn.utils.client.SegmentedClient;
 import com.intel.jndn.utils.client.StreamingClient;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.OnTimeout;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
+
 /**
  * Implementation of a client that can handle segmented data, retries after
  * failed requests, and streaming of data packets.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class AdvancedClient extends SimpleClient implements SegmentedClient, StreamingClient {
 
-  private static final Logger logger = Logger.getLogger(AdvancedClient.class.getName());
   public static final int DEFAULT_MAX_RETRIES = 3;
+  private static final Logger logger = Logger.getLogger(AdvancedClient.class.getName());
   private static AdvancedClient defaultInstance;
   private final SegmentedClient segmentedClient;
   private final RetryClient retryClient;
   private final StreamingClient streamingClient;
-
-  /**
-   * Singleton access for simpler client use
-   *
-   * @return a default client
-   */
-  public static AdvancedClient getDefault() {
-    if (defaultInstance == null) {
-      defaultInstance = new AdvancedClient();
-    }
-    return defaultInstance;
-  }
 
   /**
    * Build an advanced client
@@ -87,6 +76,18 @@ public class AdvancedClient extends SimpleClient implements SegmentedClient, Str
     this.segmentedClient = new DefaultSegmentedClient();
     this.retryClient = new DefaultRetryClient(DEFAULT_MAX_RETRIES);
     this.streamingClient = new DefaultStreamingClient();
+  }
+
+  /**
+   * Singleton access for simpler client use
+   *
+   * @return a default client
+   */
+  public static AdvancedClient getDefault() {
+    if (defaultInstance == null) {
+      defaultInstance = new AdvancedClient();
+    }
+    return defaultInstance;
   }
 
   /**

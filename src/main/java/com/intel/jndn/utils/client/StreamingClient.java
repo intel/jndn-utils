@@ -13,16 +13,17 @@
  */
 package com.intel.jndn.utils.client;
 
-import java.io.IOException;
-import java.io.InputStream;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Define a client that can stream content bytes that are partitioned over
  * multiple packets.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface StreamingClient {
 
@@ -39,5 +40,5 @@ public interface StreamingClient {
    * @return a stream of content bytes
    * @throws IOException if the stream setup fails
    */
-  public InputStream getStreamAsync(Face face, Interest interest, SegmentationType partitionMarker) throws IOException;
+  InputStream getStreamAsync(Face face, Interest interest, SegmentationType partitionMarker) throws IOException;
 }

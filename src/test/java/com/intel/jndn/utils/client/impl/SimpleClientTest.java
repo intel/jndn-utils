@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test SimpleClient.java
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SimpleClientTest {
 

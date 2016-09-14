@@ -14,15 +14,16 @@
 package com.intel.jndn.utils.processing.impl;
 
 import com.intel.jndn.utils.ProcessingStage;
-import java.io.ByteArrayOutputStream;
-import java.util.zip.GZIPOutputStream;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.util.Blob;
+
+import java.io.ByteArrayOutputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Sample stage for compressing {@link Data} content using GZIP
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class CompressionStage implements ProcessingStage<Data, Data> {
 

@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -11,18 +11,21 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
  * more details.
  */
+
 package com.intel.jndn.utils.client;
 
-import java.io.IOException;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
 
+import java.io.IOException;
+
 /**
- * Define a client that can retry {@link Interest} packets on timeout.
+ * Define a client that can retry {@link Interest} packets on timeout. TODO should return Cancellation so that users
+ * can stop the process
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface RetryClient {
 
@@ -40,5 +43,5 @@ public interface RetryClient {
    * @param onTimeout the application's failure callback
    * @throws IOException when the client cannot perform the necessary network IO
    */
-  public void retry(Face face, Interest interest, OnData onData, OnTimeout onTimeout) throws IOException;
+  void retry(Face face, Interest interest, OnData onData, OnTimeout onTimeout) throws IOException;
 }

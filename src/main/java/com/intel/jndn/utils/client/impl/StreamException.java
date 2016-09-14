@@ -15,7 +15,7 @@ package com.intel.jndn.utils.client.impl;
 
 /**
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class StreamException extends Exception {
 

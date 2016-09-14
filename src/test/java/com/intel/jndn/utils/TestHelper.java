@@ -14,6 +14,15 @@
 package com.intel.jndn.utils;
 
 import com.intel.jndn.mock.MockKeyChain;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.security.KeyChain;
+import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.transport.UdpTransport;
+import net.named_data.jndn.util.Blob;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,19 +35,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.transport.UdpTransport;
-import net.named_data.jndn.util.Blob;
 
 /**
  * Collect assorted methods to help with testing
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class TestHelper {
 
@@ -104,7 +105,7 @@ public class TestHelper {
 
     public ScheduledExecutorService executor;
     public KeyChain keyChain;
-    public List<Face> faces = new ArrayList<>();
+    public final List<Face> faces = new ArrayList<>();
   }
 
   public static class EventProcessor implements Runnable {

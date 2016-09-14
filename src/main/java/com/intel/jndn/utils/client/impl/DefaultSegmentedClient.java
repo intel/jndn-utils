@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -13,10 +13,9 @@
  */
 package com.intel.jndn.utils.client.impl;
 
-import com.intel.jndn.utils.client.SegmentedClient;
 import com.intel.jndn.utils.client.DataStream;
-import java.io.IOException;
-import java.util.logging.Logger;
+import com.intel.jndn.utils.client.SegmentedClient;
+import com.intel.jndn.utils.impl.SegmentationHelper;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -24,18 +23,21 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.Name.Component;
 import net.named_data.jndn.OnData;
 
+import java.io.IOException;
+import java.util.logging.Logger;
+
 /**
  * Retrieve segments one by one until the FinalBlockId indicates an end segment;
  * then request remaining packets. This class currently only handles segmented
  * data (not yet byte-offset segmented data).
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class DefaultSegmentedClient implements SegmentedClient {
 
   private static final Logger logger = Logger.getLogger(DefaultSegmentedClient.class.getName());
   private static DefaultSegmentedClient defaultInstance;
-  private byte marker = 0x00;
+  private final byte marker = 0x00;
 
   /**
    * Singleton access for simpler client use
@@ -64,6 +66,26 @@ public class DefaultSegmentedClient implements SegmentedClient {
     face.expressInterest(interest, stream, stream);
 
     return stream;
+  }
+
+  /**
+   * Replace the final component of an interest name with a segmented component;
+   * if the interest name does not have a segmented component, this will add
+   * one.
+   *
+   * @param interest the request
+   * @param segmentNumber a segment number
+   * @param marker a marker to use for segmenting the packet
+   * @return a segmented interest (a copy of the passed interest)
+   */
+  protected Interest replaceFinalComponent(Interest interest, long segmentNumber, byte marker) {
+    Interest copied = new Interest(interest);
+    Component lastComponent = Component.fromNumberWithMarker(segmentNumber, marker);
+    Name newName = (SegmentationHelper.isSegmented(copied.getName(), marker))
+        ? copied.getName().getPrefix(-1)
+        : new Name(copied.getName());
+    copied.setName(newName.append(lastComponent));
+    return copied;
   }
 
   /**
@@ -124,26 +146,6 @@ public class DefaultSegmentedClient implements SegmentedClient {
       logger.info("Interest sent: " + copiedInterest.toUri());
       setLastRequestedSegment(segmentNumber);
     }
-  }
-
-  /**
-   * Replace the final component of an interest name with a segmented component;
-   * if the interest name does not have a segmented component, this will add
-   * one.
-   *
-   * @param interest the request
-   * @param segmentNumber a segment number
-   * @param marker a marker to use for segmenting the packet
-   * @return a segmented interest (a copy of the passed interest)
-   */
-  protected Interest replaceFinalComponent(Interest interest, long segmentNumber, byte marker) {
-    Interest copied = new Interest(interest);
-    Component lastComponent = Component.fromNumberWithMarker(segmentNumber, marker);
-    Name newName = (SegmentationHelper.isSegmented(copied.getName(), marker))
-            ? copied.getName().getPrefix(-1)
-            : new Name(copied.getName());
-    copied.setName(newName.append(lastComponent));
-    return copied;
   }
 
 }

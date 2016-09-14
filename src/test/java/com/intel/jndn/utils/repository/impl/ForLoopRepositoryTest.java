@@ -16,7 +16,7 @@ package com.intel.jndn.utils.repository.impl;
 /**
  * Test {@link ForLoopRepository}.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class ForLoopRepositoryTest extends RepositoryTest {
 

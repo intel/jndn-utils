@@ -14,27 +14,27 @@
 package com.intel.jndn.utils.server;
 
 import com.intel.jndn.utils.Server;
-import com.intel.jndn.utils.server.RespondWithData;
+
 import java.io.IOException;
 
 /**
- * Defines the API for a {@link Server} producing {@link Data} packets
- * dynamically; in other words, when an {@link Interest} arrives, this server
+ * Defines the API for a {@link Server} producing data packets
+ * dynamically; in other words, when an interest arrives, this server
  * will run a callback to determine what packet to send back. As good practice,
  * keep callback methods as short as possible.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface DynamicServer extends Server {
 
   /**
-   * Set the callback method to run when an {@link Interest} packet is passed to
-   * this server. This method should either return a {@link Data} packet that
+   * Set the callback method to run when an interest packet is passed to
+   * this server. This method should either return a data packet that
    * satisfies the Interest or throw an Exception to avoid sending. Calling this
    * method a second time should replace the callback.
    *
    * @param callback the callback instance
    * @throws java.io.IOException if the server fails to register a prefix
    */
-  public void respondUsing(RespondWithData callback) throws IOException;
+  void respondUsing(RespondWithData callback) throws IOException;
 }

@@ -14,14 +14,8 @@
 package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.utils.server.DynamicServer;
-import com.intel.jndn.utils.server.RespondWithData;
-import com.intel.jndn.utils.server.RespondWithBlob;
 import com.intel.jndn.utils.server.RespondWithBlob;
 import com.intel.jndn.utils.server.RespondWithData;
-import com.intel.jndn.utils.server.impl.ServerBaseImpl;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -30,11 +24,15 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.OnInterest;
 import net.named_data.jndn.util.Blob;
 
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Implementation of a {@link DynamicServer} that wraps the {@link OnInterest}
  * callback with some encoding and pipeline support.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SimpleServer extends ServerBaseImpl implements DynamicServer {
 

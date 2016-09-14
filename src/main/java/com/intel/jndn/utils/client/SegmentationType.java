@@ -17,14 +17,14 @@ package com.intel.jndn.utils.client;
  * Documents known partition types from
  * http://named-data.net/doc/tech-memos/naming-conventions.pdf
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public enum SegmentationType {
 
   SEGMENT((byte) 0x00),
   BYTE_OFFSET((byte) 0xFB);
 
-  private byte marker;
+  private final byte marker;
 
   SegmentationType(byte marker) {
     this.marker = marker;

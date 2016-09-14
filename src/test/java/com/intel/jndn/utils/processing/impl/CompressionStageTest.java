@@ -14,17 +14,19 @@
 package com.intel.jndn.utils.processing.impl;
 
 import com.intel.jndn.utils.client.impl.AdvancedClient;
-import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test {@link CompressionStage}.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class CompressionStageTest {
 

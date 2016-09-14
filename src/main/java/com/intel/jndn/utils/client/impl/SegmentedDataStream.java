@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -13,9 +13,17 @@
  */
 package com.intel.jndn.utils.client.impl;
 
+import com.intel.jndn.utils.client.DataStream;
 import com.intel.jndn.utils.client.OnComplete;
 import com.intel.jndn.utils.client.OnException;
-import com.intel.jndn.utils.client.DataStream;
+import com.intel.jndn.utils.impl.SegmentationHelper;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnTimeout;
+import net.named_data.jndn.encoding.EncodingException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,12 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnTimeout;
-import net.named_data.jndn.encoding.EncodingException;
 
 /**
  * As packets are received, they are mapped by their last component's segment
@@ -40,7 +42,7 @@ import net.named_data.jndn.encoding.EncodingException;
  * data is received; if data is received out of order, the callbacks will not be
  * fired until adjoining packets are received.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SegmentedDataStream implements DataStream {
 
@@ -48,8 +50,8 @@ public class SegmentedDataStream implements DataStream {
   private final byte PARTITION_MARKER = 0x00;
   private volatile long current = -1;
   private volatile long end = Long.MAX_VALUE;
-  private Map<Long, Data> packets = new HashMap<>();
-  private List<Object> observers = new ArrayList<>();
+  private final Map<Long, Data> packets = new HashMap<>();
+  private final List<Object> observers = new ArrayList<>();
   private Exception exception;
 
   @Override
@@ -84,7 +86,6 @@ public class SegmentedDataStream implements DataStream {
       throw new StreamException(exception);
     }
 
-    Object o = new LinkedList();
     return new DataAssembler(list(), PARTITION_MARKER).assemble();
   }
 
@@ -146,7 +147,7 @@ public class SegmentedDataStream implements DataStream {
         current++;
         assert (packets.containsKey(current));
         Data retrieved = packets.get(current);
-        observersOfType(OnData.class).stream().forEach((OnData cb) -> {
+        observersOfType(OnData.class).forEach((OnData cb) -> {
           cb.onData(interest, retrieved);
         });
       } while (hasNextPacket());
@@ -172,14 +173,14 @@ public class SegmentedDataStream implements DataStream {
 
   @Override
   public synchronized void onComplete() {
-    observersOfType(OnComplete.class).stream().forEach((OnComplete cb) -> {
+    observersOfType(OnComplete.class).forEach((OnComplete cb) -> {
       cb.onComplete();
     });
   }
 
   @Override
   public synchronized void onTimeout(Interest interest) {
-    observersOfType(OnTimeout.class).stream().forEach((OnTimeout cb) -> {
+    observersOfType(OnTimeout.class).forEach((OnTimeout cb) -> {
       cb.onTimeout(interest);
     });
   }
@@ -188,7 +189,7 @@ public class SegmentedDataStream implements DataStream {
   public synchronized void onException(Exception exception) {
     this.exception = exception;
 
-    observersOfType(OnException.class).stream().forEach((OnException cb) -> {
+    observersOfType(OnException.class).forEach((OnException cb) -> {
       cb.onException(exception);
     });
   }

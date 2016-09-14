@@ -14,24 +14,25 @@
 package com.intel.jndn.utils.client.impl;
 
 import com.intel.jndn.utils.Client;
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
-import java.util.logging.Logger;
 import net.named_data.jndn.encoding.EncodingException;
+
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Provide a client to simplify information retrieval over the NDN network.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class SimpleClient implements Client {
 
@@ -41,18 +42,6 @@ public class SimpleClient implements Client {
   private static SimpleClient defaultInstance;
   private final long sleepTime;
   private final long interestLifetime;
-
-  /**
-   * Singleton access for simpler client use
-   *
-   * @return a default client
-   */
-  public static SimpleClient getDefault() {
-    if (defaultInstance == null) {
-      defaultInstance = new SimpleClient();
-    }
-    return defaultInstance;
-  }
 
   /**
    * Build a simple client
@@ -73,6 +62,18 @@ public class SimpleClient implements Client {
    */
   public SimpleClient() {
     this(DEFAULT_SLEEP_TIME, DEFAULT_TIMEOUT);
+  }
+
+  /**
+   * Singleton access for simpler client use
+   *
+   * @return a default client
+   */
+  public static SimpleClient getDefault() {
+    if (defaultInstance == null) {
+      defaultInstance = new SimpleClient();
+    }
+    return defaultInstance;
   }
 
   /**
@@ -159,7 +160,6 @@ public class SimpleClient implements Client {
    * @return a default interest for the given name
    */
   public Interest getDefaultInterest(Name name) {
-    Interest interest = new Interest(name, interestLifetime);
-    return interest;
+    return new Interest(name, interestLifetime);
   }
 }

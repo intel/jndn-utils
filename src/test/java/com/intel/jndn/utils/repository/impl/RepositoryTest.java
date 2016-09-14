@@ -14,17 +14,18 @@
 package com.intel.jndn.utils.repository.impl;
 
 import com.intel.jndn.utils.Repository;
-import static com.intel.jndn.utils.repository.impl.RepoHelper.*;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import org.junit.Test;
+
+import static com.intel.jndn.utils.repository.impl.RepoHelper.*;
 import static org.junit.Assert.*;
 
 /**
  * Extend this in descendant tests.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public abstract class RepositoryTest {
 

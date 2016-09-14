@@ -13,10 +13,8 @@
  */
 package com.intel.jndn.utils.server.impl;
 
-import com.intel.jndn.utils.ProcessingStage;
 import com.intel.jndn.mock.MockFace;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.intel.jndn.utils.ProcessingStage;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -24,34 +22,26 @@ import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.junit.Assert.*;
 
 /**
  * Test base server implementation.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class ServerBaseImplTest {
 
-  Face face;
-  ServerBaseImpl instance;
+  private Face face;
+  private ServerBaseImpl instance;
 
   @Before
   public void before() throws Exception {
     face = new MockFace();
     instance = new ServerBaseImplImpl(face, new Name("/test/base"));
-  }
-
-  public class ServerBaseImplImpl extends ServerBaseImpl {
-
-    public ServerBaseImplImpl(Face face, Name prefix) {
-      super(face, prefix);
-    }
-
-    @Override
-    public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
   }
 
   /**
@@ -61,7 +51,7 @@ public class ServerBaseImplTest {
   public void testGetPrefix() {
     assertNotNull(instance.getPrefix());
   }
-  
+
   /**
    * Test of getRegisteredPrefixId method, of class ServerBaseImpl
    */
@@ -105,5 +95,17 @@ public class ServerBaseImplTest {
     Thread.sleep(100);
     assertTrue(instance.isRegistered());
     executor.shutdownNow();
+  }
+
+  public class ServerBaseImplImpl extends ServerBaseImpl {
+
+    public ServerBaseImplImpl(Face face, Name prefix) {
+      super(face, prefix);
+    }
+
+    @Override
+    public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
   }
 }
