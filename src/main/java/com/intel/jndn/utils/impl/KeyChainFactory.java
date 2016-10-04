@@ -49,6 +49,12 @@ import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
  */
 public class KeyChainFactory {
     /**
+     * Private constructor
+     */
+    private KeyChainFactory() {
+    }
+    
+    /**
      * Build and configure an NDN {@link KeyChain} from the file system; looks in the ~/.ndn folder for keys and
      * identity SQLite DB.
      *
