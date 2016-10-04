@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -14,6 +14,7 @@
 package com.intel.jndn.utils.processing.impl;
 
 import com.intel.jndn.utils.ProcessingStage;
+import com.intel.jndn.utils.ProcessingStageException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.security.KeyChain;
@@ -57,11 +58,15 @@ public class SigningStage implements ProcessingStage<Data, Data> {
    *
    * @param context the data packet to sign
    * @return the signed data packet
-   * @throws Exception if signing fails
+   * @throws ProcessingStageException if signing fails
    */
   @Override
-  public Data process(Data context) throws Exception {
-    keyChain.sign(context, certificateName);
+  public Data process(Data context) throws ProcessingStageException {
+    try {
+      keyChain.sign(context, certificateName);
+    } catch (SecurityException e) {
+      throw new ProcessingStageException(e);
+    }
     return context;
   }
 }

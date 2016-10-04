@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -15,6 +15,7 @@ package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.mock.MockFace;
 import com.intel.jndn.utils.ProcessingStage;
+import com.intel.jndn.utils.ProcessingStageException;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -55,7 +56,7 @@ public class ServerBaseImplTest {
   /**
    * Test of getRegisteredPrefixId method, of class ServerBaseImpl
    */
-  public void testGetRegisteredPrefixId(){
+  public void testGetRegisteredPrefixId() {
     assertEquals(ServerBaseImpl.UNREGISTERED, instance.getRegisteredPrefixId());
   }
 
@@ -76,8 +77,8 @@ public class ServerBaseImplTest {
   public void testPipeline() throws Exception {
     ProcessingStage<Data, Data> pipelineStage = new ProcessingStage<Data, Data>() {
       @Override
-      public Data process(Data context) throws Exception {
-        throw new Exception("Test exceptions with this");
+      public Data process(Data context) throws ProcessingStageException {
+        throw new ProcessingStageException("Test exceptions with this");
       }
     };
     instance.addPostProcessingStage(pipelineStage);
