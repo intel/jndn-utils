@@ -63,7 +63,32 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     this.contentStore = contentStore;
   }
 
+  private static boolean isAttributesRequest(Name name, Interest interest) {
+    return name.equals(interest.getName()) && interest.getChildSelector() == -1;
+  }
+
+  private static void sendAttributes(Face face, Name publisherName) {
+    Data data = new Data(publisherName);
+    data.setContent(new Blob("[attributes here]"));
+    data.getMetaInfo().setFreshnessPeriod(ATTRIBUTES_FRESHNESS_PERIOD);
+    try {
+      face.putData(data);
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "Failed to publish attributes for publisher: " + publisherName, e);
+    }
+  }
+
+  /**
+   * Open the publisher, registering prefixes and announcing group entry. If the publisher is already open, this method
+   * immediately returns
+   *
+   * @throws IOException if prefix registration or group announcement fails
+   */
   synchronized void open() throws IOException {
+    if (opened) {
+      return;
+    }
+
     opened = true;
     CompletableFuture<Void> future = new CompletableFuture<>();
     OnRegistration onRegistration = new OnRegistration(future);
@@ -95,9 +120,7 @@ class NdnPublisher implements Publisher, OnInterestCallback {
 
   @Override
   public void publish(Blob message) throws IOException {
-    if (!opened) {
-      open();
-    }
+    open(); // will immediately return if already open
 
     long id = latestMessageId.getAndIncrement();
     Name name = PubSubNamespace.toMessageName(prefix, id);
@@ -125,10 +148,6 @@ class NdnPublisher implements Publisher, OnInterestCallback {
     }
   }
 
-  private static boolean isAttributesRequest(Name name, Interest interest) {
-    return name.equals(interest.getName()) && interest.getChildSelector() == -1;
-  }
-
   private void sendContent(Face face, Name name) {
     try {
       contentStore.push(face, name);
@@ -142,17 +161,6 @@ class NdnPublisher implements Publisher, OnInterestCallback {
       contentStore.push(face, interest);
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "Failed to publish message, aborting: {0}", new Object[]{interest.getName(), e});
-    }
-  }
-
-  private static void sendAttributes(Face face, Name publisherName) {
-    Data data = new Data(publisherName);
-    data.setContent(new Blob("[attributes here]"));
-    data.getMetaInfo().setFreshnessPeriod(ATTRIBUTES_FRESHNESS_PERIOD);
-    try {
-      face.putData(data);
-    } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Failed to publish attributes for publisher: " + publisherName, e);
     }
   }
 }

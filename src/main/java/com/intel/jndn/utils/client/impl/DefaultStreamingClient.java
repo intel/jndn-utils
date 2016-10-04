@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -86,7 +86,31 @@ public class DefaultStreamingClient implements StreamingClient {
       }
     });
 
-    return in;
+    return new DoublePipeInputStream(in, out);
+  }
+
+  /**
+   * Helper for closing both ends of the pipe on close
+   */
+  private class DoublePipeInputStream extends InputStream {
+    private final PipedInputStream in;
+    private final PipedOutputStream out;
+
+    public DoublePipeInputStream(PipedInputStream in, PipedOutputStream out) {
+      this.in = in;
+      this.out = out;
+    }
+
+    @Override
+    public int read() throws IOException {
+      return in.read();
+    }
+
+    @Override
+    public void close() throws IOException {
+      in.close();
+      out.close();
+    }
   }
 
   /**

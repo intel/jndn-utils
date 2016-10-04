@@ -1,6 +1,6 @@
 /*
  * jndn-utils
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -14,6 +14,7 @@
 package com.intel.jndn.utils.server.impl;
 
 import com.intel.jndn.utils.ProcessingStage;
+import com.intel.jndn.utils.ProcessingStageException;
 import com.intel.jndn.utils.Server;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
@@ -113,9 +114,9 @@ public abstract class ServerBaseImpl implements Server {
    * @param data the {@link Data} to process
    * @return a processed {@link Data} packet; no guarantee as to whether it is
    * the same instance as passed in as a parameter (and likely not).
-   * @throws Exception if a pipeline stage fails
+   * @throws ProcessingStageException if a pipeline stage fails
    */
-  public Data processPipeline(Data data) throws Exception {
+  public Data processPipeline(Data data) throws ProcessingStageException {
     for (ProcessingStage<Data, Data> stage : pipeline) {
       data = stage.process(data);
     }

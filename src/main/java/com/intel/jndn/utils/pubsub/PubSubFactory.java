@@ -25,7 +25,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.util.Blob;
 
 import java.io.IOException;
-import java.util.Random;
+import java.security.SecureRandom;
 
 /**
  * Assemble the necessary elements for building the {@link Publisher} and {@link Subscriber} implementations
@@ -60,7 +60,7 @@ public class PubSubFactory {
    * @return a group-announcing, unopened subscriber (it will automatically open on first publish)
    */
   public static Publisher newPublisher(Face face, Name prefix) {
-    long publisherId = Math.abs(new Random().nextLong());
+    long publisherId = Math.abs(new SecureRandom().nextLong());
     return new NdnPublisher(face, prefix, publisherId, new NdnAnnouncementService(face, prefix), new BoundedInMemoryPendingInterestTable(1024), new InMemoryContentStore(2000));
   }
 }
