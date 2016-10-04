@@ -16,6 +16,7 @@ package com.intel.jndn.utils.pubsub;
 
 import com.intel.jndn.mock.MockKeyChain;
 import com.intel.jndn.utils.Publisher;
+import com.intel.jndn.utils.TestHelper;
 import com.intel.jndn.utils.Topic;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
@@ -42,15 +43,13 @@ import static org.junit.Assert.fail;
  */
 public class PubSubTestIT {
   private static final Logger LOGGER = Logger.getLogger(PubSubTestIT.class.getName());
-  private Face pubFace;
-  private Face subFace;
+  private TestHelper.NdnEnvironment ndnEnvironment;
 
   @Before
   public void before() throws Exception {
     String hostname = System.getProperty("nfd.ip");
     LOGGER.info("Testing on NFD at: " + hostname);
-    pubFace = connect(hostname);
-    subFace = connect(hostname);
+    ndnEnvironment = TestHelper.buildTestEnvironment(hostname, 4);
   }
 
   @Test
@@ -58,15 +57,51 @@ public class PubSubTestIT {
     Topic topic = new Topic(new Name("/pub/sub/topic"));
     CountDownLatch latch = new CountDownLatch(1);
 
-    topic.subscribe(pubFace, b -> latch.countDown(), e -> fail(e.getMessage()));
+    topic.subscribe(getPublisherFace(), b -> latch.countDown(), e -> fail(e.getMessage()));
 
-    Publisher publisher = topic.newPublisher(subFace);
+    Publisher publisher = topic.newPublisher(getSubscriberFace());
     publisher.publish(new Blob("."));
     publisher.publish(new Blob(".."));
     publisher.publish(new Blob("..."));
 
     latch.await(20, TimeUnit.SECONDS);
     assertEquals(0, latch.getCount());
+  }
+
+  @Test
+  public void cannotUseSameFaceTwice() throws Exception {
+    Topic topic = new Topic(new Name("/pub/sub/on/same/face"));
+    CountDownLatch latch = new CountDownLatch(1);
+
+    topic.subscribe(getPublisherFace(), b -> latch.countDown(), e -> fail(e.getMessage()));
+
+    Publisher publisher = topic.newPublisher(getPublisherFace());
+    publisher.publish(new Blob("."));
+
+    latch.await(5, TimeUnit.SECONDS);
+    assertEquals(1, latch.getCount());
+  }
+
+  @Test
+  public void multiplePublishers() throws Exception {
+    Topic topic = new Topic(new Name("/pub/sub/multiple/publishers"));
+    CountDownLatch latch = new CountDownLatch(1);
+
+    topic.subscribe(getSubscriberFace(), b -> latch.countDown(), e -> fail(e.getMessage()));
+
+    Publisher publisher = topic.newPublisher(getPublisherFace());
+    publisher.publish(new Blob("."));
+
+    latch.await(5, TimeUnit.SECONDS);
+    assertEquals(1, latch.getCount());
+  }
+
+  private Face getSubscriberFace() {
+    return ndnEnvironment.faces.get(0);
+  }
+
+  private Face getPublisherFace() {
+    return ndnEnvironment.faces.get(1);
   }
 
   private Face connect(String hostName) throws SecurityException {
