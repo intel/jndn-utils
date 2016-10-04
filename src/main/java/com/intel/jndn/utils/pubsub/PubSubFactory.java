@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.util.Random;
 
 /**
- * Assemble the necessary elements for building the {@link Publisher} and {@link Subscriber} implementations
+ * Assemble the necessary elements for building the {@link Publisher} and {@link Subscriber} implementations. Note that
+ * different {@link Face}s must be used for each subscriber/publisher; the reason for this is that an interest sent on
+ * a face will not be re-expressed back to itself by the NFD.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

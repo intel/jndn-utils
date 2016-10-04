@@ -5,22 +5,29 @@
 
 <p>The NDN pub-sub algorithm is designed using the following criteria:</p>
 <ul>
-    <li>subscriber-driven</li>
-    <li>lightweight</li>
-    <li>avoid unnecessary IO</li>
+  <li>subscriber-driven</li>
+  <li>lightweight</li>
+  <li>avoid unnecessary IO</li>
 </ul>
 
 <p>It makes the following guarantees:</p>
 <ul>
-    <li>each publisher will order its own messages by the order in which they were published; however, the mechanism
-        for this ordering (i.e. a monotonically-increasing ID) will not maintain the guarantee across multiple
-        publishers (in this case, an application-level mechanism, like a time-synchronized timestamp, must be used;
-        alternatively, try ChronoSync)
-    </li>
-    <li>publishers will provide the messages published on a topic for a specified lifetime; even after being closed,
-        the publisher must maintain a registered prefix and respond to subscriber requests for data
-    </li>
-    <li>subscribers will eventually discover all routable publishers</li>
+  <li>each publisher will order its own messages by the order in which they were published; however, the mechanism
+    for this ordering (i.e. a monotonically-increasing ID) will not maintain the guarantee across multiple
+    publishers (in this case, an application-level mechanism, like a time-synchronized timestamp, must be used;
+    alternatively, try ChronoSync)
+  </li>
+  <li>publishers will provide the messages published on a topic for a specified lifetime; even after being closed,
+    the publisher must maintain a registered prefix and respond to subscriber requests for data
+  </li>
+  <li>subscribers will eventually discover all routable publishers</li>
+</ul>
+
+<p>Known limitations:</p>
+<ul>
+  <li>different faces must be used for each subscriber/publisher; the reason for this is that an interest sent on
+    a face will not be re-expressed back to itself by the NFD
+  </li>
 </ul>
 </body>
 </html>
