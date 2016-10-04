@@ -47,7 +47,7 @@ import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class KeyChainUtils {
+public class KeyChainFactory {
     /**
      * Build and configure an NDN {@link KeyChain} from the file system; looks in the ~/.ndn folder for keys and
      * identity SQLite DB.
