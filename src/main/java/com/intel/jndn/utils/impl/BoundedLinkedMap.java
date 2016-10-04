@@ -104,7 +104,7 @@ public class BoundedLinkedMap<K, V> implements Map<K, V> {
   @Override
   public synchronized V remove(Object key) {
     V value = map.remove(key);
-    if (key == latest) {
+    if (key.equals(latest)) {
       latest = findLatest(map);
     }
     return value;
