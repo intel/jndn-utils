@@ -14,28 +14,19 @@
 
 package com.intel.jndn.utils.pubsub;
 
-import com.intel.jndn.mock.MockKeyChain;
 import com.intel.jndn.utils.Publisher;
 import com.intel.jndn.utils.Topic;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.ThreadPoolFace;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.transport.AsyncTcpTransport;
-import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static com.intel.jndn.utils.TestHelper.connect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -69,27 +60,5 @@ public class PubSubTestIT {
 
     latch.await(20, TimeUnit.SECONDS);
     assertEquals(0, latch.getCount());
-  }
-
-  private Face connect(String hostName) throws SecurityException {
-    ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
-    AsyncTcpTransport transport = new AsyncTcpTransport(pool) {
-      @Override
-      public boolean isLocal(Transport.ConnectionInfo connectionInfo) throws IOException {
-        // hack for Docker: because we connect to dockerized NFDs using localhost the face uses /localhost/nfd/... to
-        // register prefixes; however, inside the container the NFD sees the face as non-local and drops the request
-        // because it violates the localhost rule; setting the face to false ensures that we use /localhop/nfd/... and
-        // the request goes through
-        return false;
-      }
-    };
-    AsyncTcpTransport.ConnectionInfo connectionInfo = new AsyncTcpTransport.ConnectionInfo(hostName, 6363, true);
-    ThreadPoolFace face = new ThreadPoolFace(pool, transport, connectionInfo);
-
-    Name signatureName = new Name("/topic/test/it").appendVersion(new Random().nextLong()); // note that using the same signature name seemed to cause registration failures
-    KeyChain keyChain = MockKeyChain.configure(signatureName);
-    face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
-
-    return face;
   }
 }

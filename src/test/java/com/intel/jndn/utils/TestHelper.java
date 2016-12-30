@@ -17,9 +17,12 @@ import com.intel.jndn.mock.MockKeyChain;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.ThreadPoolFace;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.transport.AsyncTcpTransport;
+import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.transport.UdpTransport;
 import net.named_data.jndn.util.Blob;
 
@@ -53,14 +56,14 @@ public class TestHelper {
 
   public static List<CompletableFuture<Data>> buildFutureSegments(Name name, int from, int to) {
     return buildSegments(name, from, to).stream()
-            .map((d) -> CompletableFuture.completedFuture(d))
-            .collect(Collectors.toList());
+        .map((d) -> CompletableFuture.completedFuture(d))
+        .collect(Collectors.toList());
   }
 
   public static List<Data> buildSegments(Name name, int from, int to) {
     return IntStream.range(from, to).boxed()
-            .map((i) -> buildData(new Name(name).appendSegment(i), i.toString(), to - 1))
-            .collect(Collectors.toList());
+        .map((i) -> buildData(new Name(name).appendSegment(i), i.toString(), to - 1))
+        .collect(Collectors.toList());
   }
 
   public static Data buildData(Name name, String content) {
@@ -91,11 +94,11 @@ public class TestHelper {
     return environment;
   }
 
-  public static String buildRandomString(int length) { 
+  public static String buildRandomString(int length) {
     return new String(buildRandomBytes(length));
   }
-  
-  public static byte[] buildRandomBytes(int length){
+
+  public static byte[] buildRandomBytes(int length) {
     byte[] bytes = new byte[length];
     new Random().nextBytes(bytes);
     return bytes;
@@ -125,8 +128,30 @@ public class TestHelper {
       }
     }
   }
-  
-  public static class TestCounter{
+
+  public static class TestCounter {
     public int count = 0;
+  }
+
+  public static Face connect(String hostName) throws SecurityException {
+    ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
+    AsyncTcpTransport transport = new AsyncTcpTransport(pool) {
+      @Override
+      public boolean isLocal(Transport.ConnectionInfo connectionInfo) throws IOException {
+        // hack for Docker: because we connect to dockerized NFDs using localhost the face uses /localhost/nfd/... to
+        // register prefixes; however, inside the container the NFD sees the face as non-local and drops the request
+        // because it violates the localhost rule; setting the face to false ensures that we use /localhop/nfd/... and
+        // the request goes through
+        return false;
+      }
+    };
+    AsyncTcpTransport.ConnectionInfo connectionInfo = new AsyncTcpTransport.ConnectionInfo(hostName, 6363, true);
+    ThreadPoolFace face = new ThreadPoolFace(pool, transport, connectionInfo);
+
+    Name signatureName = new Name("/topic/test/it").appendVersion(new Random().nextLong()); // note that using the same signature name seemed to cause registration failures
+    KeyChain keyChain = MockKeyChain.configure(signatureName);
+    face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
+
+    return face;
   }
 }
