@@ -23,10 +23,12 @@ import net.named_data.jndn.ThreadPoolFace;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.AsyncTcpTransport;
+import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -71,7 +73,16 @@ public class PubSubTestIT {
 
   private Face connect(String hostName) throws SecurityException {
     ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
-    AsyncTcpTransport transport = new AsyncTcpTransport(pool);
+    AsyncTcpTransport transport = new AsyncTcpTransport(pool) {
+      @Override
+      public boolean isLocal(Transport.ConnectionInfo connectionInfo) throws IOException {
+        // hack for Docker: because we connect to dockerized NFDs using localhost the face uses /localhost/nfd/... to
+        // register prefixes; however, inside the container the NFD sees the face as non-local and drops the request
+        // because it violates the localhost rule; setting the face to false ensures that we use /localhop/nfd/... and
+        // the request goes through
+        return false;
+      }
+    };
     AsyncTcpTransport.ConnectionInfo connectionInfo = new AsyncTcpTransport.ConnectionInfo(hostName, 6363, true);
     ThreadPoolFace face = new ThreadPoolFace(pool, transport, connectionInfo);
 
