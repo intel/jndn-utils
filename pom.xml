@@ -9,7 +9,7 @@
   <name>jndn-utils</name>
   <description>Collection of tools to simplify synchronous and asynchronous data transfer over the NDN network
   </description>
-  <url>https://github.com/01org/jndn-utils</url>
+  <url>https://github.com/intel/jndn-utils</url>
   <packaging>jar</packaging>
 
   <licenses>
@@ -22,7 +22,7 @@
   <developers>
     <developer>
       <name>Andrew Brown</name>
-      <url>http://github.com/andrewsbrown</url>
+      <url>http://github.com/abrown</url>
     </developer>
   </developers>
 
@@ -34,9 +34,9 @@
   </distributionManagement>
 
   <scm>
-    <url>https://github.com/01org/jndn-utils</url>
-    <connection>scm:git:git@github.com:01org/jndn-utils.git</connection>
-    <developerConnection>scm:git:git@github.com:01org/jndn-utils.git</developerConnection>
+    <url>https://github.com/intel/jndn-utils</url>
+    <connection>scm:git:git@github.com:intel/jndn-utils.git</connection>
+    <developerConnection>scm:git:git@github.com:intel/jndn-utils.git</developerConnection>
   </scm>
 
   <dependencies>
@@ -236,7 +236,7 @@
               <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}</checkinComment>
               <content>${project.build.directory}/site/apidocs</content>
               <skipDeletedFiles>true</skipDeletedFiles>
-              <pubScmUrl>scm:git:https://github.com/01org/jndn-utils.git</pubScmUrl>
+              <pubScmUrl>scm:git:https://github.com/intel/jndn-utils.git</pubScmUrl>
               <scmBranch>gh-pages</scmBranch>
             </configuration>
           </plugin>
