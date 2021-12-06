@@ -25,7 +25,7 @@ import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class SegmentedDataStream implements DataStream {
   private final byte PARTITION_MARKER = 0x00;
   private volatile long current = -1;
   private volatile long end = Long.MAX_VALUE;
-  private final Map<Long, Data> packets = new HashMap<>();
+  private final Map<Long, Data> packets = new LinkedHashMap<>();
   private final List<Object> observers = new ArrayList<>();
   private Exception exception;
 
