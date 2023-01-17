@@ -1,3 +1,13 @@
+# DISCONTINUATION OF PROJECT.
+
+This project will no longer be maintained by Intel.
+
+This project has been identified as having known security escapes.
+
+Intel has ceased development and contributions including, but not limited to, maintenance, bug fixes, new releases, or updates, to this project.
+
+Intel no longer accepts patches to this project.
+
 # jndn-utils
 
 This project is a collection of tools to simplify synchronous and asynchronous data transfer over the NDN network. It relies on the [NDN Protocol](https://named-data.net) and its associated [client library](https://github.com/named-data/jndn).
